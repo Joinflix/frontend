@@ -1,0 +1,25 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+  "compilerOptions": {
+    "target": "ESNext", //compiles to the latest version of JavaScript
+    "module": "ESNext", //uses import/export syntax
+    "moduleResolution": "bundler", //handles both Node and browser
+    "jsx": "react-jsx", //no need to import React in every JSX file
+    "strict": true, //enables strict type checking
+    "esModuleInterop": true, //enables importing CommonJS modules
+    "allowSyntheticDefaultImports": true, //allow default imports without a default export
+    "skipLibCheck": true, //skips type checking for external libraries
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": { "@/*": ["./src/*"] },
+
+    "outDir": "dist",
+    "rootDir": "src",
+    "noEmit": false
+  },
+  "include": ["src/**/*"] //only compile files in the src
+}
