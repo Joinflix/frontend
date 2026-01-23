@@ -20,7 +20,7 @@ const LandingBody = () => {
             className="border border-gray-700 rounded-xs px-3 text-xs"
             placeholder="이메일 주소"
           />
-          <button className="bg-[#E50914] cursor-pointer hover:bg-[#B12A25] text-white text-sm py-2.5 px-5 rounded-xs">
+          <button className="bg-[#816BFF] cursor-pointer hover:bg-[#5e42c8] text-white text-sm py-2.5 px-5 rounded-xs">
             시작하기 &gt;{" "}
           </button>
         </div>
