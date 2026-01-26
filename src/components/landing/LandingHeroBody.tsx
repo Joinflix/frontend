@@ -1,4 +1,11 @@
+import { useNavigate } from "react-router";
+
 const LandingBody = () => {
+  const navigate = useNavigate();
+  const handleClickSignup = () => {
+    navigate("/signup");
+  };
+
   return (
     <>
       <div className="mt-30 mb-25 flex flex-col items-center  text-white py-10">
@@ -20,7 +27,10 @@ const LandingBody = () => {
             className="border border-gray-700 rounded-xs px-3 text-xs"
             placeholder="이메일 주소"
           />
-          <button className="bg-[#816BFF] cursor-pointer hover:bg-[#5e42c8] text-white text-sm py-2.5 px-5 rounded-xs">
+          <button
+            className="bg-[#816BFF] cursor-pointer hover:bg-[#5e42c8] text-white text-sm py-2.5 px-5 rounded-xs"
+            onClick={handleClickSignup}
+          >
             시작하기 &gt;{" "}
           </button>
         </div>
