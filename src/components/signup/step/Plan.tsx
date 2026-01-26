@@ -9,11 +9,18 @@ const Plan = ({
     features: { title: string; description: string }[];
   };
 }) => {
+  const handleClickPlan = () => {
+    alert(plan.name);
+  };
+
   return (
-    <div className="border border-gray-300 p-2 rounded-lg">
+    <div
+      className="border border-gray-300 p-2 rounded-lg cursor-pointer hover:scale-107 transition-transform"
+      onClick={handleClickPlan}
+    >
       {/* color block */}
       <div
-        className={`bg-gradient-to-br ${plan.gradient} text-white rounded-sm p-2 px-5`}
+        className={`bg-gradient-to-br ${plan.gradient} text-white rounded-sm p-2 px-3 pb-7`}
       >
         <span className="text-sm">{plan.name}</span>
       </div>

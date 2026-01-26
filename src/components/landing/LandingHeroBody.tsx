@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 const LandingBody = () => {
   const navigate = useNavigate();
   const handleClickSignup = () => {
-    navigate("/signup");
+    navigate("/signup/step1-send-email");
   };
 
   return (
@@ -31,7 +31,7 @@ const LandingBody = () => {
             className="bg-[#816BFF] cursor-pointer hover:bg-[#5e42c8] text-white text-sm py-2.5 px-5 rounded-xs"
             onClick={handleClickSignup}
           >
-            시작하기 &gt;{" "}
+            시작하기 &gt;
           </button>
         </div>
       </div>
