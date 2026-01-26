@@ -8,7 +8,7 @@ const LandingHeader = () => {
 
   return (
     <header className="flex flex-row justify-between py-5 px-8">
-      <div className="text-[#816BFF] font-extrabold text-xl uppercase tracking-wide">
+      <div className="text-[#816BFF] font-extrabold text-xl uppercase tracking-wide cursor-default">
         joinflix
       </div>
       <button
