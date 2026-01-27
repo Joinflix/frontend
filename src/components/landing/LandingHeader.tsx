@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 const LandingHeader = () => {
   const navigate = useNavigate();
   const handleClickLogin = () => {
-    navigate("/browsing");
+    navigate("/signin");
   };
 
   return (
