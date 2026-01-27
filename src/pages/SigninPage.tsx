@@ -1,14 +1,8 @@
-import { useNavigate } from "react-router";
 import SigninHeader from "../components/signin/SigninHeader";
 import { SigninBody } from "../components/signin/SigninBody";
 import SigninFooter from "../components/signin/SigninFooter";
 
 const SigninPage = () => {
-  const navigate = useNavigate();
-  const handleClickNext = () => {
-    navigate("/brow");
-  };
-
   return (
     <div className="w-full bg-gradient-to-b from-[#2B2355] to-black ">
       <SigninHeader />
