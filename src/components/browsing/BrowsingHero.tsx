@@ -1,3 +1,4 @@
+import { MessageSquareMore, Play } from "lucide-react";
 import { useState, useRef } from "react";
 
 const BrowsingHero = ({
@@ -44,6 +45,8 @@ const BrowsingHero = ({
     alert(`play ${title}`);
   };
 
+  const handleClickParty = () => {};
+
   return (
     <div
       className="relative w-full sm:h-[30vh] md:h-[50vh] lg:h-[70vh] xl:h-[80vh] rounded-lg overflow-hidden"
@@ -87,12 +90,27 @@ const BrowsingHero = ({
       </div>
 
       {/* play button */}
-      <button
-        className="absolute left-8 bottom-[15%] rounded-[0.3rem] md:bottom-[10%] lg:bottom-[20%] z-30 bg-white  hover:bg-white/70 font-bold md:rounded-sm px-5 py-1 text-sm md:px-7 md:py-1.5 md:text-base cursor-pointer transform hover:scale-110 transition-transform duration-200"
-        onClick={handleClickPlay}
-      >
-        ▶ Play
-      </button>
+      <div className="absolute left-8 bottom-[15%] md:bottom-[10%] lg:bottom-[20%] z-30 flex gap-4">
+        <button
+          className="rounded-[0.3rem] bg-white  hover:bg-white/70 font-bold md:rounded-sm px-4 py-1 text-sm md:px-7 md:py-1.5 md:text-base cursor-pointer transform hover:scale-110 transition-transform duration-200"
+          onClick={handleClickPlay}
+        >
+          <div className="flex items-center gap-1">
+            <Play className="size-4 stroke-3 fill-black" />
+            Play
+          </div>
+        </button>
+
+        <button
+          className="rounded-[0.3rem] bg-[#816BFF] hover:bg-[#816BFF]/70 text-white font-bold md:rounded-sm px-4 py-1 text-sm md:px-7 md:py-1.5 md:text-base cursor-pointer transform hover:scale-110 transition-transform duration-200 border border-white"
+          onClick={handleClickParty}
+        >
+          <div className="flex items-center gap-1">
+            <MessageSquareMore className="size-4 stroke-3" />
+            Party
+          </div>
+        </button>
+      </div>
     </div>
   );
 };
