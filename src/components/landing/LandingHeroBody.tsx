@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { useNavigate } from "react-router";
 
 const LandingBody = () => {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+
   const handleClickSignup = () => {
-    navigate("/signup/step1-send-email");
+    if (!email) return alert("이메일을 입력해주세요!");
+    navigate("/signup/step1-send-code", { state: { email } });
   };
 
   return (
@@ -26,6 +30,8 @@ const LandingBody = () => {
             type="email"
             className="border border-gray-700 rounded-xs px-3 text-xs"
             placeholder="이메일 주소"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
           <button
             className="bg-[#816BFF] cursor-pointer hover:bg-[#5e42c8] text-white text-sm py-2.5 px-5 rounded-xs"
