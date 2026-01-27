@@ -11,6 +11,10 @@ const Step2Password = () => {
     navigate("/signin/code");
   };
 
+  const handleClickLogin = () => {
+    navigate("/browsing");
+  };
+
   return (
     <div>
       <div className="text-white flex flex-col gap-3 mt-25 mb-50">
@@ -32,7 +36,10 @@ const Step2Password = () => {
             placeholder="비밀번호"
           />
 
-          <button className="bg-[#816BFF] cursor-pointer hover:bg-[#5e42c8] text-white py-2.5 px-5 rounded-xs ">
+          <button
+            className="bg-[#816BFF] cursor-pointer hover:bg-[#5e42c8] text-white py-2.5 px-5 rounded-xs"
+            onClick={handleClickLogin}
+          >
             로그인
           </button>
 
