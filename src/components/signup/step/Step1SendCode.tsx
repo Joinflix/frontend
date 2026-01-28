@@ -1,8 +1,7 @@
-import { useMutation } from "@tanstack/react-query";
 import { Laptop, Monitor } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
-import axiosClient from "../../../api/axiosClient";
 import { Spinner } from "../../ui/spinner";
+import { useRequestVerificationCode } from "../../../api/queries/useRequestVerificationCode";
 
 export const Step1SendCode = () => {
   const navigate = useNavigate();
@@ -10,26 +9,14 @@ export const Step1SendCode = () => {
   const location = useLocation();
   const email = location.state?.email || "";
 
-  const { mutateAsync, isPending } = useMutation({
-    mutationFn: async () => {
-      const res = await axiosClient.post("/auth/email/send", { email });
-      return res.data;
-    },
-    onSuccess: () => {
-      alert(`인증번호가 전송되었습니다. ${email} 수신함을 확인해주세요.`);
-      navigate("/signup/step1-confirm-code");
-    },
-    onError: (err) => {
-      alert(
-        err.response?.data?.message ||
-          "알 수 없는 에러가 발생했습니다. 고객센터에 문의해주세요.",
-      );
-    },
+  const { mutateAsync, isPending } = useRequestVerificationCode({
+    email,
+    onSuccess: () =>
+      navigate("/signup/step1-confirm-code", { state: { email } }),
   });
 
   const handleClickSendCode = () => {
     mutateAsync();
-    //TODO: 성공 시에 navigate해서 code 인증으로 이동
   };
 
   return (
