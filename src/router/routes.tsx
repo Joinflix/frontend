@@ -14,6 +14,7 @@ import Step1Email from "../components/signin/step/Step1Email";
 import Step2Code from "../components/signin/step/Step2Code";
 import Step2Password from "../components/signin/step/Step2Password";
 import Step2SetPassword from "../components/signup/step/Step2SetPassword";
+import Step3SetNickname from "../components/signup/step/Step3SetNickname";
 
 const routes = createBrowserRouter(
   createRoutesFromElements(
@@ -29,6 +30,7 @@ const routes = createBrowserRouter(
         <Route path="step1-send-code" element={<Step1SendCode />} />
         <Route path="step1-confirm-code" element={<Step1ConfirmCode />} />
         <Route path="step2-set-password" element={<Step2SetPassword />} />
+        <Route path="step3-set-nickname" element={<Step3SetNickname />} />
         <Route path="step2-select-plan" element={<Step2SelectPlan />} />
       </Route>
     </>,
