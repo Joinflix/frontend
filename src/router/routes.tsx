@@ -10,21 +10,17 @@ import { Step1SendCode } from "../components/signup/step/Step1SendCode";
 import { Step1ConfirmCode } from "../components/signup/step/Step1ConfirmCode";
 import { Step4SelectPlan } from "../components/signup/step/Step4SelectPlan";
 import SigninPage from "../pages/SigninPage";
-import Step1Email from "../components/signin/step/Step1Email";
-import Step2Code from "../components/signin/step/Step2Code";
-import Step2Password from "../components/signin/step/Step2Password";
 import Step2SetPassword from "../components/signup/step/Step2SetPassword";
 import Step3SetNickname from "../components/signup/step/Step3SetNickname";
 import Step4ListMembership from "../components/signup/step/Step4ListMembership";
+import PasswordSignin from "../components/signin/step/PasswordSignin";
 
 const routes = createBrowserRouter(
   createRoutesFromElements(
     <>
       <Route index element={<LandingPage />} />;
       <Route path="/signin" element={<SigninPage />}>
-        <Route index element={<Step1Email />} />
-        <Route path="code" element={<Step2Code />} />
-        <Route path="password" element={<Step2Password />} />
+        <Route index element={<PasswordSignin />} />
       </Route>
       <Route path="/browsing" element={<BrowsingPage />} />,
       <Route path="/signup" element={<SignupPage />}>
