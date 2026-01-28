@@ -16,7 +16,7 @@ export function useRequestSignin({
 }: RequestSigninParams) {
   return useMutation({
     mutationFn: async () => {
-      const res = await axiosClient.post("/login", {
+      const res = await axiosClient.post("/auth/login", {
         email,
         password,
       });
