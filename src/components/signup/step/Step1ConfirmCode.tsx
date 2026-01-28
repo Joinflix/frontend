@@ -32,16 +32,18 @@ export const Step1ConfirmCode = () => {
     mutateAsync();
   };
 
-  const { mutateAsync: verifyCode, isPending: isVerifying } = useVerifyCode({
-    email,
-    onSuccess: () => {
-      navigate("/signup/step2-set-password");
+  const { mutateAsync: verifyCode, isPending: isVerifyingCode } = useVerifyCode(
+    {
+      email,
+      onSuccess: () => {
+        navigate("/signup/step2-set-password", { state: { email } });
+      },
+      onError: (message) => {
+        alert(message);
+        setOtp("");
+      },
     },
-    onError: (message) => {
-      alert(message);
-      setOtp("");
-    },
-  });
+  );
 
   useEffect(() => {
     if (otp.length === OTP_MAX_LENGTH) {
