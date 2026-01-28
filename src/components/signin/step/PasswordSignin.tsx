@@ -1,9 +1,46 @@
 import { useNavigate } from "react-router";
+import { signinSchema, type SigninForm } from "../../../schemas/signinSchema";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { useRequestSignin } from "../../../api/queries/useRequestSignin";
 
 const PasswordSignin = () => {
   const navigate = useNavigate();
-  const handleClickNext = () => {
-    navigate("code");
+
+  const [showPassword, setShowPassword] = useState(false);
+
+  const {
+    register,
+    formState: { errors, isValid },
+    watch,
+  } = useForm<SigninForm>({
+    resolver: zodResolver(signinSchema),
+    mode: "onChange",
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const email = watch("email");
+  const password = watch("password");
+
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
+
+  const { mutateAsync, isPending } = useRequestSignin({
+    email,
+    password,
+    onSuccess: () => {
+      navigate("/browsing", { replace: true });
+    },
+  });
+
+  const handleClickSignin = () => {
+    mutateAsync();
   };
 
   return (
@@ -15,17 +52,56 @@ const PasswordSignin = () => {
         </span>
 
         <div className="flex flex-col m-1 gap-3 mt-5 w-full">
-          {/* 이메일 주소 */}
-          <input
-            type="email"
-            className="border border-[#816BFF] rounded-xs px-3 py-3"
-            placeholder="이메일 주소"
-          />
+          {/* 이메일 */}
+          <div className="relative w-full max-w-md">
+            <input
+              {...register("email")}
+              type="email"
+              className="w-full px-3 pr-10 border border-[#816BFF] bg-[#816BFF]/10 rounded-xs py-2.5"
+              placeholder="이메일 주소"
+            />
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.email.message}
+              </p>
+            )}
+          </div>
+          {/* 비밀번호 */}
+          <div className="relative w-full max-w-md">
+            <input
+              {...register("password")}
+              type={showPassword ? "text" : "password"}
+              className="w-full px-3 pr-10 border border-[#816BFF] bg-[#816BFF]/10 rounded-xs py-2.5"
+              placeholder="비밀번호(8자리 이상)"
+            />
+            <button
+              className="absolute inset-y-0 right-3 flex items-center cursor-pointer"
+              onClick={togglePasswordVisibility}
+            >
+              {showPassword ? (
+                <Eye className="size-5 stroke-[#816BFF]" />
+              ) : (
+                <EyeOff className="size-5 stroke-[#816BFF]" />
+              )}
+            </button>
+            {/* 비밀번호 입력 에러 메시지 */}
+            {errors.password && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.password.message}
+              </p>
+            )}
+          </div>
           <button
-            className="bg-[#816BFF] cursor-pointer hover:bg-[#5e42c8] text-white py-2.5 px-5 rounded-xs"
-            onClick={handleClickNext}
+            disabled={!isValid || isPending}
+            className={`w-full py-2.5 px-5 rounded-xs text-white transition
+    ${
+      isValid && !isPending
+        ? "bg-[#816BFF] hover:bg-[#5e42c8] cursor-pointer"
+        : "bg-gray-400 cursor-not-allowed"
+    }`}
+            onClick={handleClickSignin}
           >
-            다음
+            {isPending ? "로그인 중..." : "로그인"}
           </button>
         </div>
       </div>
