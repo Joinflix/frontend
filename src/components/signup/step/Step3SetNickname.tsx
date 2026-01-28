@@ -1,19 +1,22 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleCheck, CircleX, IdCard } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { replace, useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import {
   type NicknameForm,
   nicknameSchema,
 } from "../../../schemas/nicknameSchema";
 import { useRequestSignup } from "../../../api/queries/useRequestSignup";
 import { Spinner } from "../../ui/spinner";
+import { useRequestNicknameCheck } from "../../../api/queries/useRequestNicknameCheck";
+import { useEffect, useState } from "react";
 
 const ICON_CLASSNAME = "size-5 stroke-[#816BFF]";
 
 const Step3SetNickname = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
   const email = location.state?.email || "";
   const password = location.state?.password || "";
 
@@ -30,8 +33,37 @@ const Step3SetNickname = () => {
   });
 
   const nickname = watch("nickname");
+  const [isValidNickname, setIsValidNickname] = useState(null);
+  const [debouncedNickname, setDebouncedNickname] = useState(nickname);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedNickname(nickname);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [nickname]);
 
   // TODO: nickname availability 확인
+  const { mutateAsync: checkNickname, isPending: isCheckingNickname } =
+    useRequestNicknameCheck({
+      nickname,
+      onSuccess: () => {
+        setIsValidNickname(true);
+      },
+      onError: () => {
+        setIsValidNickname(false);
+      },
+    });
+
+  useEffect(() => {
+    if (!debouncedNickname || !isValid) {
+      setIsValidNickname(null);
+      return;
+    }
+
+    checkNickname();
+  }, [debouncedNickname, isValid]);
 
   const { mutateAsync, isPending } = useRequestSignup({
     email,
@@ -43,7 +75,10 @@ const Step3SetNickname = () => {
     },
   });
 
+  const canSubmit = isValid && isValidNickname === true && !isCheckingNickname;
+
   const handleClickSignup = () => {
+    if (!canSubmit) return;
     mutateAsync();
   };
 
@@ -86,18 +121,25 @@ const Step3SetNickname = () => {
                 placeholder="닉네임(3자 이상 30자 이하)"
               />
               <button className="absolute inset-y-0 right-3 flex items-center cursor-pointer">
-                {nickname ? ( // only show icons if something is typed
-                  isValid ? (
+                {nickname &&
+                  (isCheckingNickname ? (
+                    <Spinner className="size-5" />
+                  ) : isValidNickname === true ? (
                     <CircleCheck className={ICON_CLASSNAME} />
-                  ) : (
+                  ) : isValidNickname === false ? (
                     <CircleX className={`${ICON_CLASSNAME} stroke-red-500`} />
-                  )
-                ) : null}
+                  ) : null)}
               </button>
             </div>
-            {errors.nickname && (
+            {!errors.nickname && isValidNickname === false && (
               <p className="text-red-500 text-sm mt-1">
-                {errors.nickname.message}
+                이미 사용 중인 닉네임입니다.
+              </p>
+            )}
+
+            {!errors.nickname && isValidNickname === true && (
+              <p className="text-[#816BFF] text-sm mt-1">
+                사용 가능한 닉네임입니다.
               </p>
             )}
           </div>
@@ -105,14 +147,14 @@ const Step3SetNickname = () => {
           {/*3. button */}
           <div className="w-full max-w-md mt-2 mb-10">
             <button
-              disabled={!isValid || isPending}
+              disabled={!canSubmit || isPending}
               className={`text-white text-xl rounded-[0.2rem] w-full flex items-center justify-center py-3 transition
-    ${
-      !isValid || isPending
-        ? "bg-gray-400 cursor-not-allowed"
-        : "bg-[#816BFF] hover:bg-[#5e42c8] cursor-pointer"
-    }
-  `}
+              ${
+                !canSubmit || isPending
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-[#816BFF] hover:bg-[#5e42c8] cursor-pointer"
+              }
+              `}
               onClick={handleClickSignup}
             >
               {isPending ? (
