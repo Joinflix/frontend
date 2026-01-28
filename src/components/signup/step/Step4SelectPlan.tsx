@@ -1,6 +1,6 @@
 import { Plans } from "./Plans";
 
-export const Step2SelectPlan = () => {
+export const Step4SelectPlan = () => {
   return (
     <div>
       <div className="w-full max-w-full mt-10 flex flex-col gap-y-5 items-center">

@@ -8,10 +8,10 @@ const CHECK_LIST_DATA = [
   "가지고 계신 모든 디바이스에서 조인플렉스를 즐겨보세요.",
 ];
 
-export const Step2Membership = () => {
+const Step4ListMembership = () => {
   const navigate = useNavigate();
   const handleClickButton = () => {
-    navigate("/signup/step2-select-plan");
+    navigate("/signup/step4-select-plan");
   };
 
   return (
@@ -54,3 +54,5 @@ export const Step2Membership = () => {
     </div>
   );
 };
+
+export default Step4ListMembership;
