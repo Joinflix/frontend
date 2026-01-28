@@ -2,10 +2,12 @@ import { useMutation } from "@tanstack/react-query";
 import { Laptop, Monitor } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
 import axiosClient from "../../../api/axiosClient";
+import { Spinner } from "../../ui/spinner";
 
 export const Step1SendCode = () => {
-  const location = useLocation();
   const navigate = useNavigate();
+
+  const location = useLocation();
   const email = location.state?.email || "";
 
   const { mutateAsync, isPending } = useMutation({
@@ -74,7 +76,14 @@ export const Step1SendCode = () => {
   `}
             onClick={handleClickSendCode}
           >
-            인증 코드 받기
+            {isPending ? (
+              <span className="inline-flex items-center gap-2">
+                <Spinner className="size-5 stroke-3" />
+                인증 코드 전송 중
+              </span>
+            ) : (
+              "인증 코드 받기"
+            )}
           </button>
         </div>
       </div>
