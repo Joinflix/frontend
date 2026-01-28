@@ -14,7 +14,7 @@ export function useRequestVerificationCode({
 }: RequestCodeParams) {
   return useMutation({
     mutationFn: async () => {
-      const res = await axiosClient.post("/auth/email/send", { email });
+      const res = await axiosClient.post("/auth/email-send", { email });
       return res.data;
     },
     onSuccess: () => {

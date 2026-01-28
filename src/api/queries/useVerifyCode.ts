@@ -11,7 +11,7 @@ interface VerifyCodeParams {
 export function useVerifyCode({ email, onSuccess, onError }: VerifyCodeParams) {
   return useMutation({
     mutationFn: async (code: string) => {
-      const res = await axiosClient.post("/auth/email/verify", {
+      const res = await axiosClient.post("/auth/email-verify", {
         email,
         code,
       });
