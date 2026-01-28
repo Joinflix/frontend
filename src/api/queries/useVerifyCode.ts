@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import axiosClient from "../axiosClient";
+import { FALLBACK_ERROR_MESSAGE } from "../../global/const/error";
 
 interface VerifyCodeParams {
   email: string;
@@ -20,8 +21,7 @@ export function useVerifyCode({ email, onSuccess, onError }: VerifyCodeParams) {
       if (onSuccess) onSuccess();
     },
     onError: (err: any) => {
-      const message =
-        err.response?.data?.message || "인증 코드가 올바르지 않습니다.";
+      const message = err.response?.data?.message || FALLBACK_ERROR_MESSAGE;
       if (onError) onError(message);
     },
   });
