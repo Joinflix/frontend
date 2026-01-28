@@ -1,4 +1,4 @@
-import { Laptop, Monitor } from "lucide-react";
+import { MailCheck } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
 import { Spinner } from "../../ui/spinner";
 import { useRequestVerificationCode } from "../../../api/queries/useRequestVerificationCode";
@@ -12,7 +12,10 @@ export const Step1SendCode = () => {
   const { mutateAsync, isPending } = useRequestVerificationCode({
     email,
     onSuccess: () =>
-      navigate("/signup/step1-confirm-code", { state: { email } }),
+      navigate("/signup/step1-confirm-code", {
+        state: { email },
+        replace: true,
+      }),
   });
 
   const handleClickSendCode = () => {
@@ -21,11 +24,10 @@ export const Step1SendCode = () => {
 
   return (
     <div>
-      <div className="w-full max-w-md mt-10 flex flex-col gap-y-5">
+      <div className="w-full max-w-sm mt-10 flex flex-col gap-y-5">
         {/*1. icon */}
         <div className="flex flex-row items-center">
-          <Laptop className="size-20 stroke-[#816BFF] stroke-[0.8]" />
-          <Monitor className="size-18 stroke-[#816BFF] stroke-[0.8]" />
+          <MailCheck className="size-17 stroke-[#816BFF] stroke-1" />
         </div>
 
         {/*2. step content */}
@@ -37,15 +39,14 @@ export const Step1SendCode = () => {
           </div>
           <div>
             <h1 className="text-3xl font-semibold leading-snug tracking-wide">
-              계정 설정 마무리하기
+              이메일 인증
             </h1>
           </div>
           <div className="mt-3 font-light">
             <span>
-              다양한 디바이스에서 언제든지 비밀번호 없이 조인플렉스를 이용하실
-              수 있도록 <span className="font-bold">{email}</span> 주소로{" "}
-              <span className="font-bold">6자리 인증 코드</span>를
-              보내드리겠습니다.
+              사용자의 이메일 계정을 인증하기 위해{" "}
+              <span className="font-bold">{email}</span>로{" "}
+              <span className="font-bold">6자리 코드</span>를 보내드립니다.
             </span>
           </div>
         </div>
