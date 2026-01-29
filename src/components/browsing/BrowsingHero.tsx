@@ -107,15 +107,7 @@ const BrowsingHero = ({
           </button>
 
           <button
-            className="
-    relative rounded-[0.3rem]
-    bg-[#816BFF] text-white font-bold
-    md:rounded-sm px-4 py-1 text-sm md:px-7 md:py-1.5 md:text-base
-    cursor-pointer border border-white
-    transform transition-all duration-300
-    hover:scale-110 hover:bg-[#816BFF]/80
-    neon-glow neon-edge neon-btn
-  "
+            className="relative rounded-[0.3rem] bg-[#816BFF] text-white font-bold md:rounded-sm px-4 py-1 text-sm md:px-7 md:py-1.5 md:text-base cursor-pointer border border-white transform transition-all duration-300 hover:scale-110 hover:bg-[#816BFF]/80 neon-glow neon-edge neon-btn"
             onClick={handleClickParty}
           >
             <div className="flex items-center gap-1 relative z-10 neon-text text-sm">
@@ -124,14 +116,7 @@ const BrowsingHero = ({
             </div>
 
             {/* glow layer */}
-            <span
-              className="
-      absolute inset-0 rounded-[0.3rem]
-      bg-[#816BFF]
-      blur-xl opacity-40
-      -z-10
-    "
-            />
+            <span className="absolute inset-0 rounded-[0.3rem]bg-[#816BFF] blur-xl opacity-40-z-10" />
           </button>
         </div>
       </div>
