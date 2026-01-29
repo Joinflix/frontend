@@ -14,6 +14,7 @@ import Step2SetPassword from "../components/signup/step/Step2SetPassword";
 import Step3SetNickname from "../components/signup/step/Step3SetNickname";
 import Step4ListMembership from "../components/signup/step/Step4ListMembership";
 import PasswordSignin from "../components/signin/step/PasswordSignin";
+import PartyRoomPage from "../pages/PartyRoomPage";
 
 const routes = createBrowserRouter(
   createRoutesFromElements(
@@ -30,6 +31,9 @@ const routes = createBrowserRouter(
         <Route path="step3-set-nickname" element={<Step3SetNickname />} />
         <Route path="step4-list-membership" element={<Step4ListMembership />} />
         <Route path="step4-select-plan" element={<Step4SelectPlan />} />
+      </Route>
+      <Route path="/watch">
+        <Route path="party" element={<PartyRoomPage />} />
       </Route>
     </>,
   ),
