@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
+import { TypingAnimation } from "../ui/typing-animation";
 
 const LandingBody = () => {
   const navigate = useNavigate();
@@ -15,7 +16,16 @@ const LandingBody = () => {
       <div className="mt-30 mb-25 flex flex-col items-center  text-white py-10">
         {/* CTA */}
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold">영화, 시리즈 등을 무제한으로</h1>
+          <div>
+            <TypingAnimation
+              className="text-2xl font-bold"
+              loop={true}
+              pauseDelay={10_000}
+              cursorStyle="underscore"
+            >
+              영화, 시리즈 등을 무제한으로
+            </TypingAnimation>
+          </div>
           <p className="text-xs">
             7,000원으로 시작하세요. 멤버십은 언제든지 해지 가능합니다.
           </p>
