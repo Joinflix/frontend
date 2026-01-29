@@ -89,7 +89,7 @@ const BrowsingHero = ({
         {/* description */}
         <div
           className="absolute left-8 sm:bottom-[30%] md:bottom-[25%] lg:bottom-[30%] md:text-xs lg:text-sm text-white z-20 w-[200px] md:w-[350px] lg:w-[450px] hidden md:block
-  [text-shadow:0_2px_6px_rgba(0,0,0,0.9),0_6px_20px_rgba(0,0,0,0.8)]"
+  [text-shadow:0_2px_6px_rgba(0,0,0,0.9),0_6px_20px_rgba(0,0,0,0.8)] break-keep"
         >
           {description}
         </div>
@@ -97,23 +97,41 @@ const BrowsingHero = ({
         {/* play button */}
         <div className="absolute left-8 bottom-[15%] md:bottom-[10%] lg:bottom-[20%] z-30 flex gap-4">
           <button
-            className="rounded-[0.3rem] bg-white  hover:bg-white/70 font-bold md:rounded-sm px-4 py-1 text-sm md:px-7 md:py-1.5 md:text-base cursor-pointer transform hover:scale-110 transition-transform duration-200"
+            className="rounded-[0.3rem] bg-white/80 border border-white hover:bg-white/70 font-bold md:rounded-sm px-4 py-1 text-sm md:px-7 md:py-1.5 md:text-base cursor-pointer transform hover:scale-110 transition-transform duration-200"
             onClick={handleClickPlay}
           >
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 text-sm py-0.5">
               <Play className="size-4 stroke-3 fill-black" />
-              Play
+              혼자 보기
             </div>
           </button>
 
           <button
-            className="rounded-[0.3rem] bg-[#816BFF] hover:bg-[#816BFF]/70 text-white font-bold md:rounded-sm px-4 py-1 text-sm md:px-7 md:py-1.5 md:text-base cursor-pointer transform hover:scale-110 transition-transform duration-200 border border-white"
+            className="
+    relative rounded-[0.3rem]
+    bg-[#816BFF] text-white font-bold
+    md:rounded-sm px-4 py-1 text-sm md:px-7 md:py-1.5 md:text-base
+    cursor-pointer border border-white
+    transform transition-all duration-300
+    hover:scale-110 hover:bg-[#816BFF]/80
+    neon-glow neon-edge neon-btn
+  "
             onClick={handleClickParty}
           >
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 relative z-10 neon-text text-sm">
               <MessageSquareMore className="size-4 stroke-3" />
-              Party
+              같이 보기
             </div>
+
+            {/* glow layer */}
+            <span
+              className="
+      absolute inset-0 rounded-[0.3rem]
+      bg-[#816BFF]
+      blur-xl opacity-40
+      -z-10
+    "
+            />
           </button>
         </div>
       </div>

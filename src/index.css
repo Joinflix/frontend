@@ -127,3 +127,54 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes neonPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 3px rgba(255, 255, 255, 1),
+      0 0 7px rgba(255, 255, 255, 0.8),
+      0 0 12px rgba(129, 107, 255, 1),
+      0 0 24px rgba(129, 107, 255, 0.6),
+      0 0 48px rgba(129, 107, 255, 0.3);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow:
+      0 0 6px rgba(255, 255, 255, 1),
+      /* white thicker */ 0 0 12px rgba(255, 255, 255, 0.9),
+      0 0 6px rgba(129, 107, 255, 1),
+      0 0 12px rgba(129, 107, 255, 0.5),
+      0 0 24px rgba(129, 107, 255, 0.2);
+    transform: scale(1.02); /* subtle thickness illusion */
+  }
+}
+
+.neon-glow {
+  animation: neonPulse 2s ease-in-out infinite;
+}
+
+.neon-edge {
+  filter: drop-shadow(0 0 1px rgba(129, 107, 255, 1))
+    drop-shadow(0 0 1px rgba(129, 107, 255, 0.8));
+}
+
+@keyframes neonTextPulse {
+  0%,
+  100% {
+    color: rgba(210, 200, 255, 0.9);
+    text-shadow:
+      0 0 1px rgba(255, 255, 255, 0.4),
+      0 0 3px rgba(129, 107, 255, 0.4);
+  }
+  50% {
+    color: rgba(255, 255, 255, 1);
+    text-shadow:
+      0 0 2px rgba(255, 255, 255, 0.9),
+      0 0 8px rgba(129, 107, 255, 0.9);
+  }
+}
+
+.neon-btn:hover .neon-text {
+  animation: neonTextPulse 2.5s ease-in-out infinite;
+}
