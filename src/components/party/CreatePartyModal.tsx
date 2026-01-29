@@ -10,6 +10,11 @@ import {
 import PartyTypeSelector from "./PartyTypeSelector";
 import PartyForm from "./PartyForm";
 import { useState } from "react";
+import { useNavigate } from "react-router";
+import type { PartyType } from "../../types/party";
+import { partySchema, type PartyFormValues } from "../../schemas/partySchema";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 type CreatePartyModalProps = {
   partyOpen: boolean;
@@ -22,7 +27,26 @@ const CreatePartyModal = ({
   setPartyOpen,
   title,
 }: CreatePartyModalProps) => {
+  const navigate = useNavigate();
   const [partyType, setPartyType] = useState<PartyType>("PUBLIC");
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, touchedFields },
+  } = useForm<PartyFormValues>({
+    resolver: zodResolver(partySchema),
+    mode: "onChange",
+    reValidateMode: "onBlur",
+    defaultValues: { name: "", password: "" },
+  });
+
+  const onSubmit = (data: PartyFormValues) => {
+    // /api/parties (POST)
+    // *movieId, roomName, *isPublic, *hostControl, passCode
+    alert(data.name + " / " + data.password);
+    navigate(`/watch/party?title=${title}`);
+  };
 
   return (
     <Dialog open={partyOpen} onOpenChange={setPartyOpen}>
@@ -35,13 +59,21 @@ const CreatePartyModal = ({
         </DialogHeader>
 
         <PartyTypeSelector value={partyType} onChange={setPartyType} />
-        <PartyForm partyType={partyType} />
+        <PartyForm
+          partyType={partyType}
+          register={register}
+          errors={errors}
+          touchedFields={touchedFields}
+        />
 
         <DialogFooter className="flex !justify-center gap-3 mt-4">
           <Button className="bg-gray-700 hover:bg-gray-700/80 rounded-sm w-[50%]">
             예약하기
           </Button>
-          <Button className="bg-[#816BFF] hover:bg-[#816BFF]/80 rounded-sm w-[50%]">
+          <Button
+            className="bg-[#816BFF] hover:bg-[#816BFF]/80 rounded-sm w-[50%]"
+            onClick={handleSubmit(onSubmit)}
+          >
             시작하기
           </Button>
         </DialogFooter>
