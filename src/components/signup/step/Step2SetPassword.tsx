@@ -21,7 +21,7 @@ const Step2SetPassword = () => {
     watch,
   } = useForm<PasswordForm>({
     resolver: zodResolver(passwordSchema),
-    mode: "onChange",
+    mode: "onBlur",
     defaultValues: {
       password: "",
       confirmPassword: "",

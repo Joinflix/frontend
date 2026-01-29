@@ -17,7 +17,7 @@ const PasswordSignin = () => {
     watch,
   } = useForm<SigninForm>({
     resolver: zodResolver(signinSchema),
-    mode: "onChange",
+    mode: "onBlur",
     defaultValues: {
       email: "",
       password: "",
