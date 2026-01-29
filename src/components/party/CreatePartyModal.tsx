@@ -65,7 +65,7 @@ const CreatePartyModal = ({
         colors[Math.floor(Math.random() * colors.length)];
 
       const config = {
-        particleCount: 10,
+        particleCount: 30,
         spread: 70,
         startVelocity: 80,
         ticks: 300,
