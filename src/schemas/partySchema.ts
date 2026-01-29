@@ -9,6 +9,7 @@ export const partySchema = z.object({
     .string()
     .regex(/^\d{4}$/, "비밀번호는 숫자 4자리여야 합니다")
     .optional(),
+  hostControl: z.boolean(),
 });
 
 export type PartyFormValues = z.infer<typeof partySchema>;

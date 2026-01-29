@@ -32,6 +32,8 @@ const CreatePartyModal = ({
 
   const {
     register,
+    watch,
+    setValue,
     handleSubmit,
     formState: { errors, touchedFields },
   } = useForm<PartyFormValues>({
@@ -44,7 +46,7 @@ const CreatePartyModal = ({
   const onSubmit = (data: PartyFormValues) => {
     // /api/parties (POST)
     // *movieId, roomName, *isPublic, *hostControl, passCode
-    alert(data.name + " / " + data.password);
+    alert(data.name + " / " + data.password + " / " + data.hostControl);
     navigate(`/watch/party?title=${title}`);
   };
 
@@ -62,6 +64,8 @@ const CreatePartyModal = ({
         <PartyForm
           partyType={partyType}
           register={register}
+          watch={watch}
+          setValue={setValue}
           errors={errors}
           touchedFields={touchedFields}
         />
