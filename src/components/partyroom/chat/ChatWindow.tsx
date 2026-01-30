@@ -42,10 +42,10 @@ const ChatWindow = () => {
           </div>
           {/* 채팅 관리 버튼 */}
           <div className="flex flex-row gap-5 justify-center px-5 py-3 text-[#816BFF] tracking-tight ">
-            <button className="w-[50%] bg-zinc-800 py-2 cursor-pointer">
+            <button className="w-[50%] bg-zinc-800 py-1.5 text-sm cursor-pointer">
               초대 링크
             </button>
-            <button className="w-[50%] bg-zinc-800 py-2 cursor-pointer">
+            <button className="w-[50%] bg-zinc-800 py-1.5 text-sm cursor-pointer">
               채팅 얼리기
             </button>
           </div>
@@ -56,14 +56,14 @@ const ChatWindow = () => {
         </div>
 
         {/* 채팅 메시지 영역 */}
-        <div className="flex-1 flex flex-col gap-2.5 overflow-y-auto px-2 py-4">
+        <div className="flex-1 flex flex-col gap-2.5 overflow-y-auto overflow-x-hidden px-2 py-4">
           {messages.map((msg, index) => {
             // 알림 메시지
             if (msg.type === "system") {
               return (
                 <div
                   key={index}
-                  className="bg-zinc-800 w-[90%] px-2 py-2 text-zinc-400 rounded-sm self-center font-extralight text-center"
+                  className="bg-zinc-800 w-[90%] px-2 py-1.5 text-zinc-400 rounded-sm self-center font-extralight text-center text-sm"
                 >
                   {msg.text}
                 </div>
@@ -78,11 +78,12 @@ const ChatWindow = () => {
             return (
               <div
                 key={index}
-                className={`w-full px-4 rounded-sm self-start ${colorClass} text-lg font-light`}
+                className={`w-full max-w-full px-4 rounded-sm self-start ${colorClass} text-base font-light`}
               >
-                <span className="text-xl font-extrabold">{msg.user}</span>
-                <span> - </span>
-                <span>{msg.text}</span>
+                <div className="inline-block text-lg font-extrabold">
+                  {msg.user} -{" "}
+                </div>
+                <span className="break-words">{msg.text}</span>
               </div>
             );
           })}
