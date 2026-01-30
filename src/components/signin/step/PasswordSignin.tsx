@@ -5,9 +5,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRequestSignin } from "../../../api/queries/useRequestSignin";
+import { useSse } from "../../../contexts/SseContext";
 
 const PasswordSignin = () => {
   const navigate = useNavigate();
+  const { connect } = useSse();
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -17,7 +19,7 @@ const PasswordSignin = () => {
     watch,
   } = useForm<SigninForm>({
     resolver: zodResolver(signinSchema),
-    mode: "onBlur",
+    mode: "onChange",
     defaultValues: {
       email: "",
       password: "",
@@ -35,6 +37,7 @@ const PasswordSignin = () => {
     email,
     password,
     onSuccess: () => {
+      connect(); // 로그인 성공 시 SSE 연결
       navigate("/browsing", { replace: true });
     },
   });
@@ -94,11 +97,10 @@ const PasswordSignin = () => {
           <button
             disabled={!isValid || isPending}
             className={`w-full py-2.5 px-5 rounded-xs text-white transition
-    ${
-      isValid && !isPending
-        ? "bg-[#816BFF] hover:bg-[#5e42c8] cursor-pointer"
-        : "bg-gray-400 cursor-not-allowed"
-    }`}
+    ${isValid && !isPending
+                ? "bg-[#816BFF] hover:bg-[#5e42c8] cursor-pointer"
+                : "bg-gray-400 cursor-not-allowed"
+              }`}
             onClick={handleClickSignin}
           >
             {isPending ? "로그인 중..." : "로그인"}

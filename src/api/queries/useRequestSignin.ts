@@ -16,10 +16,22 @@ export function useRequestSignin({
 }: RequestSigninParams) {
   return useMutation({
     mutationFn: async () => {
-      const res = await axiosClient.post("/auth/login", {
-        email,
-        password,
-      });
+      const res = await axiosClient.post(
+        "/auth/login",
+        {
+          email,
+          password,
+        },
+        {
+          withCredentials: true
+        });
+
+      // Authorization 헤더에서 토큰 추출하여 저장 (친구 API용)
+      const authHeader = res.headers["authorization"];
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.substring(7);
+        localStorage.setItem("accessToken", token);
+      }
       return res.data;
     },
     onSuccess: () => {
