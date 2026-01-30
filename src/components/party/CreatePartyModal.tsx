@@ -15,7 +15,7 @@ import type { PartyType } from "../../types/party";
 import { partySchema, type PartyFormValues } from "../../schemas/partySchema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import confetti from "canvas-confetti";
+import { fireConfetti } from "../../utils/fireConfetti";
 
 type CreatePartyModalProps = {
   partyOpen: boolean;
@@ -54,47 +54,9 @@ const CreatePartyModal = ({
     navigate(`/watch/party?title=${title}`);
   };
 
-  const fireConfetti = () => {
-    const end = Date.now() + 0.15 * 1000;
-    const colors = ["#816BFF", "#FF3D81", "#00FFF0"];
-
-    const frame = () => {
-      if (Date.now() > end) return;
-
-      const randomColor = () =>
-        colors[Math.floor(Math.random() * colors.length)];
-
-      const config = {
-        particleCount: 30,
-        spread: 70,
-        startVelocity: 80,
-        ticks: 300,
-        gravity: 2.5,
-        scalar: 1.2,
-        shapes: ["square", "circle"],
-      };
-
-      confetti({
-        ...config,
-        angle: 60,
-        origin: { x: 0, y: 0.8 },
-        colors: [randomColor(), "#FFFFFF"],
-      });
-
-      confetti({
-        ...config,
-        angle: 120,
-        origin: { x: 1, y: 0.8 },
-        colors: [randomColor(), "#FFFFFF"],
-      });
-      requestAnimationFrame(frame);
-    };
-    frame();
-  };
-
   return (
     <Dialog open={partyOpen} onOpenChange={setPartyOpen}>
-      <DialogContent className="bg-black text-white border border-white/20 !max-w-sm px-10 py-9">
+      <DialogContent className="bg-zinc-900 text-white border border-white/20 !max-w-105 px-13 py-10">
         <DialogHeader>
           <DialogTitle className="text-center text-2xl font-bold">
             {title.toUpperCase()}
@@ -113,7 +75,7 @@ const CreatePartyModal = ({
         />
 
         <DialogFooter className="flex !justify-center gap-3 mt-4">
-          <Button className="bg-gray-700 hover:bg-gray-700/80 rounded-sm w-[50%]">
+          <Button className="bg-zinc-700 hover:bg-zinc-700/80 rounded-sm w-[50%]">
             예약하기
           </Button>
           <Button
