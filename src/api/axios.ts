@@ -12,7 +12,7 @@ const getCookie = (name: string) => {
   return undefined;
 };
 
-const axiosClient = axios.create({
+const apiClient = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
 });
@@ -23,7 +23,7 @@ const refreshClient = axios.create({
 });
 
 // 1.REQUEST INTERCEPTOR: 모든 request에 access token 주입
-axiosClient.interceptors.request.use(
+apiClient.interceptors.request.use(
   async (config) => {
     // const xsrfToken = getCookie("XSRF-TOKEN");
     // if (xsrfToken) {
@@ -41,7 +41,7 @@ axiosClient.interceptors.request.use(
 );
 
 // 2.RESPONSE INTERCEPTOR
-axiosClient.interceptors.response.use(
+apiClient.interceptors.response.use(
   // pass successful responses through
   (response) => {
     return response;
@@ -56,7 +56,7 @@ axiosClient.interceptors.response.use(
     // ) {
     //   originalRequest._retryCsrf = true;
     //   await refreshClient.get("/auth/csrf");
-    //   return axiosClient(error.config);
+    //   return apiClient(error.config);
     // }
 
     //Handle 401 AccessToken Expiration
@@ -72,7 +72,7 @@ axiosClient.interceptors.response.use(
           useAuthStore.getState().setAuth(newAccessToken);
           originalRequest.headers["Authorization"] =
             addBearerHeader(newAccessToken);
-          return axiosClient(originalRequest);
+          return apiClient(originalRequest);
         }
       } catch (refreshError) {
         useAuthStore.getState().clearAuth();
@@ -83,4 +83,4 @@ axiosClient.interceptors.response.use(
   },
 );
 
-export default axiosClient;
+export default axios;

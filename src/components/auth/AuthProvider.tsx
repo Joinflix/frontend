@@ -1,8 +1,7 @@
 import { Outlet, useNavigate } from "react-router";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useEffect } from "react";
-import axiosClient from "../../api/axiosClient";
-import { Spinner } from "../ui/spinner";
+import apiClient from "../../api/axios";
 import { removeBearerHeader } from "../../utils/removeBearerHeader";
 import SpinnerPage from "../../pages/SpinnerPage";
 
@@ -18,7 +17,7 @@ const AuthProvider = () => {
 
       // 2. access token 부재 시, refresh 시도
       try {
-        const res = await axiosClient.post("/auth/reissue");
+        const res = await apiClient.post("/auth/reissue");
 
         const newAccessToken = res.headers["authorization"];
         if (!newAccessToken) throw new Error("No access token");

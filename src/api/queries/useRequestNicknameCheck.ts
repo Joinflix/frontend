@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import axiosClient from "../axiosClient";
+import apiClient from "../axios";
 import { FALLBACK_ERROR_MESSAGE } from "../../global/const/error";
 
 interface RequestNicknameCheckParams {
@@ -15,7 +15,7 @@ export function useRequestNicknameCheck({
 }: RequestNicknameCheckParams) {
   return useMutation({
     mutationFn: async () => {
-      const res = await axiosClient.post("/auth/nickname-duplicate", {
+      const res = await apiClient.post("/auth/nickname-duplicate", {
         nickname,
       });
       return res.data;

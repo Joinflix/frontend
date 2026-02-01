@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import axiosClient from "../axiosClient";
+import apiClient from "../axios";
 import { FALLBACK_ERROR_MESSAGE } from "../../global/const/error";
 
 interface RequestCodeParams {
@@ -14,7 +14,7 @@ export function useRequestVerificationCode({
 }: RequestCodeParams) {
   return useMutation({
     mutationFn: async () => {
-      const res = await axiosClient.post("/auth/email-send", { email });
+      const res = await apiClient.post("/auth/email-send", { email });
       return res.data;
     },
     onSuccess: () => {

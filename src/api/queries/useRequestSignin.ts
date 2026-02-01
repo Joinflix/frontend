@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import axiosClient from "../axiosClient";
+import apiClient from "../axios";
 import { FALLBACK_ERROR_MESSAGE } from "../../global/const/error";
 import type { AxiosResponse } from "axios";
 
@@ -17,7 +17,7 @@ export function useRequestSignin({
 }: RequestSigninParams) {
   return useMutation({
     mutationFn: async () => {
-      const res = await axiosClient.post("/auth/login", {
+      const res = await apiClient.post("/auth/login", {
         email,
         password,
       });
