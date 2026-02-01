@@ -16,25 +16,34 @@ import Step4ListMembership from "../components/signup/step/Step4ListMembership";
 import PasswordSignin from "../components/signin/step/PasswordSignin";
 import PartyRoomPage from "../pages/PartyRoomPage";
 import AuthProvider from "../components/auth/AuthProvider";
+import AuthenticatedRoutes from "./AuthenticatedRoutes";
+import UnauthenticatedRoutes from "./UnauthenticatedRoutes";
 
 const routes = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<AuthProvider />}>
-      <Route index element={<LandingPage />} />;
-      <Route path="/signin" element={<SigninPage />}>
-        <Route index element={<PasswordSignin />} />
+      <Route element={<UnauthenticatedRoutes />}>
+        <Route index element={<LandingPage />} />;
+        <Route path="/signin" element={<SigninPage />}>
+          <Route index element={<PasswordSignin />} />
+        </Route>
+        <Route path="/signup" element={<SignupPage />}>
+          <Route path="step1-send-code" element={<Step1SendCode />} />
+          <Route path="step1-confirm-code" element={<Step1ConfirmCode />} />
+          <Route path="step2-set-password" element={<Step2SetPassword />} />
+          <Route path="step3-set-nickname" element={<Step3SetNickname />} />
+          <Route
+            path="step4-list-membership"
+            element={<Step4ListMembership />}
+          />
+          <Route path="step4-select-plan" element={<Step4SelectPlan />} />
+        </Route>
       </Route>
-      <Route path="/browsing" element={<BrowsingPage />} />,
-      <Route path="/signup" element={<SignupPage />}>
-        <Route path="step1-send-code" element={<Step1SendCode />} />
-        <Route path="step1-confirm-code" element={<Step1ConfirmCode />} />
-        <Route path="step2-set-password" element={<Step2SetPassword />} />
-        <Route path="step3-set-nickname" element={<Step3SetNickname />} />
-        <Route path="step4-list-membership" element={<Step4ListMembership />} />
-        <Route path="step4-select-plan" element={<Step4SelectPlan />} />
-      </Route>
-      <Route path="/watch">
-        <Route path="party" element={<PartyRoomPage />} />
+      <Route element={<AuthenticatedRoutes />}>
+        <Route path="/browsing" element={<BrowsingPage />} />,
+        <Route path="/watch">
+          <Route path="party" element={<PartyRoomPage />} />
+        </Route>
       </Route>
     </Route>,
   ),
