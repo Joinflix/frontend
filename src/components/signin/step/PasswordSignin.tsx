@@ -5,6 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRequestSignin } from "../../../api/queries/useRequestSignin";
+import { useAuthStore } from "../../../store/useAuthStore";
+import { removeBearerHeader } from "../../../utils/removeBearerHeader";
 
 const PasswordSignin = () => {
   const navigate = useNavigate();
@@ -34,7 +36,10 @@ const PasswordSignin = () => {
   const { mutateAsync, isPending } = useRequestSignin({
     email,
     password,
-    onSuccess: () => {
+    onSuccess: (res) => {
+      const accessToken = res.headers["authorization"];
+      const pureAccessToken = removeBearerHeader(accessToken);
+      useAuthStore.getState().setAuth(pureAccessToken);
       navigate("/browsing", { replace: true });
     },
   });

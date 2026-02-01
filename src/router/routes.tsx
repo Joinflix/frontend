@@ -15,10 +15,11 @@ import Step3SetNickname from "../components/signup/step/Step3SetNickname";
 import Step4ListMembership from "../components/signup/step/Step4ListMembership";
 import PasswordSignin from "../components/signin/step/PasswordSignin";
 import PartyRoomPage from "../pages/PartyRoomPage";
+import AuthProvider from "../components/auth/AuthProvider";
 
 const routes = createBrowserRouter(
   createRoutesFromElements(
-    <>
+    <Route element={<AuthProvider />}>
       <Route index element={<LandingPage />} />;
       <Route path="/signin" element={<SigninPage />}>
         <Route index element={<PasswordSignin />} />
@@ -35,7 +36,7 @@ const routes = createBrowserRouter(
       <Route path="/watch">
         <Route path="party" element={<PartyRoomPage />} />
       </Route>
-    </>,
+    </Route>,
   ),
 );
 

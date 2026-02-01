@@ -1,11 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
 import axiosClient from "../axiosClient";
 import { FALLBACK_ERROR_MESSAGE } from "../../global/const/error";
+import type { AxiosResponse } from "axios";
 
 interface RequestSigninParams {
   email: string;
   password: string;
-  onSuccess?: () => void;
+  onSuccess?: (res: AxiosResponse) => void;
   onError?: (message: string) => void;
 }
 
@@ -20,10 +21,10 @@ export function useRequestSignin({
         email,
         password,
       });
-      return res.data;
+      return res;
     },
-    onSuccess: () => {
-      if (onSuccess) onSuccess();
+    onSuccess: (res) => {
+      if (onSuccess) onSuccess(res);
     },
     onError: (err: any) => {
       alert(err.response?.data?.message || FALLBACK_ERROR_MESSAGE);
