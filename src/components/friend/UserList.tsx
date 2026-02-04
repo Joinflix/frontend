@@ -1,7 +1,7 @@
 import { ContactRound } from "lucide-react";
 import FriendActionButton from "./FriendActionButton";
 
-const UserList = ({ user, isPending, onAdd, onRemove, onAccept }: any) => (
+const UserList = ({ user, onRequest, onRemove, onAccept, onRefuse }: any) => (
   <div className="flex justify-between items-center p-3 hover:bg-white/5 rounded-lg transition-all duration-300 group">
     <div className="flex gap-3 items-center">
       <div className="relative">
@@ -26,10 +26,10 @@ const UserList = ({ user, isPending, onAdd, onRemove, onAccept }: any) => (
 
     <FriendActionButton
       status={user.friendStatus}
-      isPending={isPending}
-      onAdd={onAdd}
+      onRequest={onRequest}
       onRemove={onRemove}
       onAccept={onAccept}
+      onRefuse={onRefuse}
     />
   </div>
 );

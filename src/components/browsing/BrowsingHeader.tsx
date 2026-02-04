@@ -1,11 +1,12 @@
 import { ContactRound, Search } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../api/axios";
 import FriendSearchDialog from "../friend/FriendSearchDialog";
 import { AlertDropdown } from "./AlertDropdown";
 import { ProfileDropdown } from "./ProfileDropdown";
+import { useFriendActions } from "../../api/queries/useFriendActions";
 
 const ICON_STYLE = "w-5 h-5 stroke-white cursor-pointer";
 
@@ -17,6 +18,9 @@ const BrowsingHeader = () => {
   const [pendingRequestIds, setPendingRequestIds] = useState<Set<number>>(
     new Set(),
   );
+
+  const { requestFriend, removeFriend, acceptFriend, refuseFriend } =
+    useFriendActions(setPendingRequestIds);
 
   const handleClickLogo = () => {
     navigate("/browsing");
@@ -34,36 +38,20 @@ const BrowsingHeader = () => {
     },
   });
 
-  const { mutateAsync: mutateAsyncAddFriend, isPending: isPendingAddFriend } =
-    useMutation({
-      mutationKey: ["addFriend"],
-      mutationFn: async (receiverId: number) => {
-        setPendingRequestIds((prev) => new Set(prev).add(receiverId));
-        const res = await apiClient.post("/friends/requests", { receiverId });
-        console.log(res.data);
-        return res.data;
-      },
-      onSuccess: (res) => {},
-      onError: (err, receiverId) => {
-        setPendingRequestIds((prev) => {
-          const next = new Set(prev);
-          next.delete(receiverId);
-          return next;
-        });
-      },
-    });
-
-  const handleClickAddFriend = (receiverId: number) => {
-    alert("친구 추가");
-    mutateAsyncAddFriend(receiverId);
+  const handleClickRequestFriend = (receiverId: number) => {
+    requestFriend(receiverId);
   };
 
-  const handleClickRemoveFriend = () => {
-    alert("친구 삭제");
+  const handleClickRemoveFriend = (requestId: number) => {
+    removeFriend(requestId);
   };
 
-  const handleClickAcceptFriend = () => {
-    alert("친구 수락");
+  const handleClickAcceptFriend = (requestId: number) => {
+    acceptFriend(requestId);
+  };
+
+  const handleClickRefuseFriend = (requestId: number) => {
+    refuseFriend(requestId);
   };
 
   return (
@@ -91,9 +79,10 @@ const BrowsingHeader = () => {
           users={allUsers?.content}
           isLoading={allUsersIsPending}
           pendingIds={pendingRequestIds}
-          onAdd={handleClickAddFriend}
+          onRequest={handleClickRequestFriend}
           onRemove={handleClickRemoveFriend}
           onAccept={handleClickAcceptFriend}
+          onRefuse={handleClickRefuseFriend}
         />
 
         <AlertDropdown isOpen={isAlertOpen} onOpenChange={setIsAlertOpen} />

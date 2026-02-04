@@ -1,19 +1,19 @@
-import { Clock, UserRoundMinus, UserRoundPlus } from "lucide-react";
+import { Clock, UserRoundMinus, UserRoundPlus, UserRoundX } from "lucide-react";
 
 interface Props {
   status: "FRIEND" | "SENT_PENDING" | "RECEIVED_PENDING" | "NONE";
-  isPending: boolean;
-  onAdd: () => void;
+  onRequest: () => void;
   onRemove: () => void;
   onAccept: () => void;
+  onRefuse: () => void;
 }
 
 const FriendActionButton = ({
   status,
-  isPending,
-  onAdd,
+  onRequest,
   onRemove,
   onAccept,
+  onRefuse,
 }: Props) => {
   const BASE_STYLE =
     "flex items-center gap-1 px-2 py-1.5 rounded-sm text-[11px] font-bold transition-all duration-300 border backdrop-blur-md active:scale-95 cursor-pointer";
@@ -29,7 +29,7 @@ const FriendActionButton = ({
     );
   }
 
-  if (status === "SENT_PENDING" || isPending) {
+  if (status === "SENT_PENDING") {
     return (
       <button
         disabled
@@ -42,18 +42,29 @@ const FriendActionButton = ({
 
   if (status === "RECEIVED_PENDING") {
     return (
-      <button
-        onClick={onAccept}
-        className={`${BASE_STYLE} bg-emerald-500/20 border-emerald-500/30 text-green-500 hover:bg-emerald-600 hover:border-non hover:text-white`}
-      >
-        <UserRoundPlus size={14} /> <span>수락</span>
-      </button>
+      <div className="flex gap-2">
+        {/* Accept Button */}
+        <button
+          onClick={onAccept}
+          className={`${BASE_STYLE} bg-emerald-500/20 border-emerald-500/30 text-emerald-500 hover:bg-emerald-600 hover:text-white transition-colors`}
+        >
+          <UserRoundPlus size={14} /> <span>수락</span>
+        </button>
+
+        {/* Refuse Button */}
+        <button
+          onClick={onRefuse} // Ensure you pass this prop down
+          className={`${BASE_STYLE} bg-rose-500/20 border-rose-500/30 text-rose-500 hover:bg-rose-600 hover:text-white transition-colors`}
+        >
+          <UserRoundX size={14} /> <span>거절</span>
+        </button>
+      </div>
     );
   }
 
   return (
     <button
-      onClick={onAdd}
+      onClick={onRequest}
       className={`${BASE_STYLE} bg-[#816BFF]/40 border-[#816BFF] text-white hover:bg-[#816BFF] hover:text-white `}
     >
       <UserRoundPlus size={14} /> <span>추가</span>

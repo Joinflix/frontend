@@ -17,9 +17,10 @@ interface FriendSearchDialogProps {
   users: any[];
   isLoading: boolean;
   pendingIds: Set<number>;
-  onAdd: (id: number) => void;
+  onRequest: (id: number) => void;
   onRemove: (id: number) => void;
   onAccept: (id: number) => void;
+  onRefuse: (id: number) => void;
 }
 
 const FriendSearchDialog = ({
@@ -29,10 +30,10 @@ const FriendSearchDialog = ({
   setSearchWord,
   users,
   isLoading,
-  pendingIds,
-  onAdd,
+  onRequest,
   onRemove,
   onAccept,
+  onRefuse,
 }: FriendSearchDialogProps) => {
   const userId = useAuthStore((state) => state.user?.userId);
 
@@ -83,10 +84,10 @@ const FriendSearchDialog = ({
                 <UserList
                   key={user.id}
                   user={user}
-                  isPending={pendingIds.has(user.id)}
-                  onAdd={() => onAdd(user.id)}
-                  onRemove={() => onRemove(user.id)}
-                  onAccept={() => onAccept(user.id)}
+                  onRequest={() => onRequest(user.id)}
+                  onRemove={() => onRemove(user.requestId)}
+                  onAccept={() => onAccept(user.requestId)}
+                  onRefuse={() => onRefuse(user.requestId)}
                 />
               ))
           ) : (
