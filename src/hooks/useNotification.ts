@@ -2,12 +2,30 @@ import { useEffect, useRef } from "react";
 import { EventSourcePolyfill, NativeEventSource } from "event-source-polyfill";
 import { useAuthStore } from "../store/useAuthStore";
 import { API_BASE_URL } from "../global/const/api";
+import { useNotificationStore } from "../store/useNotificationStore";
 
 const EventSource = EventSourcePolyfill || NativeEventSource;
+
+export type NotificationType =
+  | "FRIEND_REQUEST"
+  | "FRIEND_ACCEPT"
+  | "FRIEND_REJECT"
+  | "PARTY_INVITE";
+
+export interface Notification {
+  id: number;
+  message: string;
+  createdAt: string;
+  notificationType: NotificationType;
+}
 
 export const useNotification = () => {
   const { accessToken, isAuthChecked } = useAuthStore();
   const esRef = useRef<EventSourcePolyfill | null>(null);
+
+  const addNotifications = useNotificationStore(
+    (state) => state.addNotifications,
+  );
 
   useEffect(() => {
     // 토큰이 있고, 인증 체크가 끝난 상태에서만 구독 시작
@@ -27,6 +45,25 @@ export const useNotification = () => {
     es.onopen = () => {
       console.log("SSE 연결 완료. 실시간 알림 대기 중...");
     };
+
+    es.addEventListener("notification", (event) => {
+      const notifications = JSON.parse(event.data) as Notification[];
+
+      const grouped: Record<NotificationType, Notification[]> = {
+        FRIEND_REQUEST: [],
+        FRIEND_ACCEPT: [],
+        FRIEND_REJECT: [],
+        PARTY_INVITE: [],
+      };
+
+      notifications.forEach((noti) => {
+        if (grouped[noti.notificationType]) {
+          grouped[noti.notificationType].push(noti);
+        }
+      });
+
+      addNotifications(grouped);
+    });
 
     // 서버에서 보내는 이벤트 이름(name) 확인.
     // 기본 이벤트 onmessage, 특정 이름 addEventListener 사용

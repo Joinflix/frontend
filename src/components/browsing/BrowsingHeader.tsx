@@ -12,6 +12,7 @@ const ICON_STYLE = "w-5 h-5 stroke-white cursor-pointer";
 const BrowsingHeader = () => {
   const navigate = useNavigate();
   const [isFriendSearchOpen, setIsFriendSearchOpen] = useState(false);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [searchWord, setSearchWord] = useState("");
   const [pendingRequestIds, setPendingRequestIds] = useState<Set<number>>(
     new Set(),
@@ -95,7 +96,7 @@ const BrowsingHeader = () => {
           onAccept={handleClickAcceptFriend}
         />
 
-        <AlertDropdown />
+        <AlertDropdown isOpen={isAlertOpen} onOpenChange={setIsAlertOpen} />
         <ProfileDropdown />
       </div>
     </header>
