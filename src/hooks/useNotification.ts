@@ -3,6 +3,7 @@ import { EventSourcePolyfill, NativeEventSource } from "event-source-polyfill";
 import { useAuthStore } from "../store/useAuthStore";
 import { API_BASE_URL } from "../global/const/api";
 import { useNotificationStore } from "../store/useNotificationStore";
+import { useQueryClient } from "@tanstack/react-query";
 
 const EventSource = EventSourcePolyfill || NativeEventSource;
 
@@ -22,6 +23,7 @@ export interface Notification {
 export const useNotification = () => {
   const { accessToken, isAuthChecked } = useAuthStore();
   const esRef = useRef<EventSourcePolyfill | null>(null);
+  const queryClient = useQueryClient();
 
   const addNotifications = useNotificationStore(
     (state) => state.addNotifications,
@@ -47,22 +49,40 @@ export const useNotification = () => {
     };
 
     es.addEventListener("notification", (event) => {
-      const notifications = JSON.parse(event.data) as Notification[];
+      try {
+        const data = JSON.parse(event.data);
+        const notifications: Notification[] = Array.isArray(data)
+          ? data
+          : [data];
 
-      const grouped: Record<NotificationType, Notification[]> = {
-        FRIEND_REQUEST: [],
-        FRIEND_ACCEPT: [],
-        FRIEND_REJECT: [],
-        PARTY_INVITE: [],
-      };
+        const grouped: Record<NotificationType, Notification[]> = {
+          FRIEND_REQUEST: [],
+          FRIEND_ACCEPT: [],
+          FRIEND_REJECT: [],
+          PARTY_INVITE: [],
+        };
 
-      notifications.forEach((noti) => {
-        if (grouped[noti.notificationType]) {
+        let shouldInvalidateUsers = false;
+
+        notifications.forEach((noti) => {
           grouped[noti.notificationType].push(noti);
-        }
-      });
 
-      addNotifications(grouped);
+          if (noti.notificationType.startsWith("FRIEND_")) {
+            shouldInvalidateUsers = true;
+          }
+        });
+
+        addNotifications(grouped);
+
+        if (shouldInvalidateUsers) {
+          queryClient.invalidateQueries({
+            queryKey: ["users"],
+            type: "active",
+          });
+        }
+      } catch (err) {
+        console.log("Non-JSON SSE message ignored:", event.data);
+      }
     });
 
     // 서버에서 보내는 이벤트 이름(name) 확인.
@@ -90,5 +110,5 @@ export const useNotification = () => {
       console.log("SSE 연결 해제");
       es.close();
     };
-  }, [accessToken, isAuthChecked]);
+  }, [accessToken, addNotifications, isAuthChecked, queryClient]);
 };

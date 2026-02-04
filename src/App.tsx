@@ -7,13 +7,18 @@ import { useNotification } from "./hooks/useNotification";
 const queryClient = new QueryClient();
 
 function App() {
-  useNotification();
   return (
     <QueryClientProvider client={queryClient}>
+      <NotificationListener />
       <RouterProvider router={routes} />
       <TanStackDevtools />
     </QueryClientProvider>
   );
+}
+
+function NotificationListener() {
+  useNotification();
+  return null;
 }
 
 export default App;
