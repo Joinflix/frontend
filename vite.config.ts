@@ -6,4 +6,7 @@ import { devtools } from "@tanstack/devtools-vite";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss(), devtools()],
+  define: {
+    global: "window",
+  },
 });
