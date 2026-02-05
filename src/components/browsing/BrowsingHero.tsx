@@ -54,7 +54,7 @@ const BrowsingHero = ({
   return (
     <>
       <div
-        className="relative w-full sm:h-[30vh] md:h-[50vh] lg:h-[70vh] xl:h-[80vh] rounded-lg overflow-hidden"
+        className="relative w-full sm:h-[30vh] md:h-[50vh] lg:h-[70vh] xl:h-[80vh] overflow-hidden sm:mt-15"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >

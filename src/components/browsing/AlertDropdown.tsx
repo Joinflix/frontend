@@ -13,11 +13,14 @@ import {
 interface AlertDropdownProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  iconStyle: string;
 }
 
-const ICON_STYLE = "w-5 h-5 stroke-white cursor-pointer";
-
-export const AlertDropdown = ({ isOpen, onOpenChange }: AlertDropdownProps) => {
+export const AlertDropdown = ({
+  isOpen,
+  onOpenChange,
+  iconStyle,
+}: AlertDropdownProps) => {
   const alarmCount = useUnreadNotificationCount();
   const notifications = useNotificationStore((state) => state.notifications);
   const allNotifications = Object.values(notifications)
@@ -32,11 +35,11 @@ export const AlertDropdown = ({ isOpen, onOpenChange }: AlertDropdownProps) => {
       <DropdownMenu open={isOpen} onOpenChange={onOpenChange}>
         <DropdownMenuTrigger asChild>
           <div className="relative cursor-pointer">
-            <Bell className={ICON_STYLE} />
+            <Bell className={iconStyle} />
             {alarmCount > 0 && (
               <span
-                className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1
-        rounded-full bg-red-500 text-[10px] font-medium text-white
+                className="absolute -top-px -right-1 min-w-[16px] h-4 px-1
+        rounded-full bg-[#816BFF] text-[10px] font-medium text-white
         flex items-center justify-center pointer-events-none"
               >
                 {alarmCount}

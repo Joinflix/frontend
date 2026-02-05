@@ -9,7 +9,7 @@ import {
 } from "../ui/dropdown-menu";
 import { LogOut, MessageCircleQuestionMark, UserRoundCog } from "lucide-react";
 
-export const ProfileDropdown = () => {
+export const ProfileDropdown = ({ iconStyle }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -19,7 +19,7 @@ export const ProfileDropdown = () => {
     >
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
-          <div className="w-6 h-6 bg-white/90 rounded-sm cursor-pointer hover:scale-105 transition-transform" />
+          <div className={`${iconStyle} bg-white ml-2 rounded-sm`} />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="bg-zinc-900/90 backdrop-blur-xl border border-white/10 text-white rounded-xl mt-2 min-w-[160px]">
           <DropdownMenuGroup>
