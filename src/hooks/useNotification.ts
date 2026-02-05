@@ -11,6 +11,8 @@ export type NotificationType =
   | "FRIEND_REQUEST"
   | "FRIEND_ACCEPT"
   | "FRIEND_REJECT"
+  | "EVENT_DELETE"
+  | "EVENT_CANCEL"
   | "PARTY_INVITE";
 
 export interface Notification {
@@ -59,17 +61,26 @@ export const useNotification = () => {
           FRIEND_REQUEST: [],
           FRIEND_ACCEPT: [],
           FRIEND_REJECT: [],
+          EVENT_DELETE: [],
+          EVENT_CANCEL: [],
           PARTY_INVITE: [],
         };
 
         let shouldInvalidateUsers = false;
 
         notifications.forEach((noti) => {
-          grouped[noti.notificationType].push(noti);
-
-          if (noti.notificationType.startsWith("FRIEND_")) {
+          if (
+            noti.notificationType.startsWith("FRIEND_") ||
+            noti.notificationType.startsWith("EVENT_")
+          ) {
             shouldInvalidateUsers = true;
           }
+
+          if (noti.notificationType.startsWith("EVENT_")) {
+            return;
+          }
+
+          grouped[noti.notificationType].push(noti);
         });
 
         addNotifications(grouped);
