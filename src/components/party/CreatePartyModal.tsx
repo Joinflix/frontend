@@ -16,6 +16,8 @@ import { partySchema, type PartyFormValues } from "../../schemas/partySchema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { fireConfetti } from "../../utils/fireConfetti";
+import apiClient from "../../api/axios";
+import { useMutation } from "@tanstack/react-query";
 
 type CreatePartyModalProps = {
   partyOpen: boolean;
@@ -44,14 +46,54 @@ const CreatePartyModal = ({
     defaultValues: { name: "", password: "" },
   });
 
-  const onSubmit = async (data: PartyFormValues) => {
-    // /api/parties (POST)
-    // *movieId, roomName, *isPublic, *hostControl, passCode
-    fireConfetti();
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+  const { mutate: joinParty } = useMutation({
+    mutationKey: ["joinParty"],
+    mutationFn: async ({
+      partyId,
+      passCode,
+    }: {
+      partyId: number;
+      passCode?: string;
+    }) => {
+      const res = await apiClient.post(`/parties/${partyId}/join`, {
+        passCode,
+      });
+      return res.data;
+    },
+    onSuccess: (data) => {
+      fireConfetti();
+      setTimeout(() => {
+        setPartyOpen(false);
+        navigate(`/watch/party/${data.partyId}`, {
+          state: { partyData: data },
+        });
+      }, 1000);
+    },
+    onError: (err) => {
+      console.error(err.message);
+    },
+  });
 
-    // alert(data.name + " / " + data.password + " / " + data.hostControl);
-    navigate(`/watch/party?title=${title}`);
+  const onSubmit = async (data: PartyFormValues) => {
+    try {
+      const payload = {
+        roomName: data.name,
+        passCode: partyType === "PRIVATE" ? data.password : null,
+        isPublic: partyType === "PRIVATE" ? false : true,
+        partyType: partyType,
+        movieId: 1,
+        hostControl: true,
+      };
+      // TODO: movie id 업데이트 필요
+
+      const partyResponse = await apiClient.post<number>("/parties", payload);
+      const newPartyId = partyResponse.data;
+
+      joinParty({ partyId: newPartyId, passCode: data.password });
+    } catch (error) {
+      console.error("Failed to create party room:", error);
+      // TODO: alert message 보여주기
+    }
   };
 
   return (
