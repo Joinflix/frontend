@@ -1,15 +1,42 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import BrowsingHeader from "../components/browsing/BrowsingHeader";
 import apiClient from "../api/axios";
 import { LockKeyhole, Play } from "lucide-react";
 import BrowsingFooter from "../components/browsing/BrowsingFooter";
+import { useNavigate } from "react-router";
 
 const PartyPage = () => {
+  const navigate = useNavigate();
+
   const { data: partyRooms, isPending } = useQuery({
     queryKey: ["getPartyRooms"],
     queryFn: async () => {
       const res = await apiClient.get("/parties");
       return res.data;
+    },
+  });
+
+  const handleClickPartyRoom = (partyId: number) => {
+    joinParty({ partyId });
+  };
+
+  const { mutate: joinParty } = useMutation({
+    mutationKey: ["joinParty"],
+    mutationFn: async ({
+      partyId,
+      passCode,
+    }: {
+      partyId: number;
+      passCode?: string;
+    }) => {
+      const res = await apiClient.post(`/parties/${partyId}/join`, "1111");
+      return res.data;
+    },
+    onSuccess: (_, variables) => {
+      navigate(`/watch/party/${variables.partyId}`);
+    },
+    onError: (err) => {
+      console.error(err.message);
     },
   });
 
@@ -27,6 +54,7 @@ const PartyPage = () => {
                 <div
                   key={partyRoom.id}
                   className="group relative text-white rounded-sm overflow-hidden bg-gray-800 cursor-pointer hover:scale-110 transform transition ease-in-out duration-500"
+                  onClick={() => handleClickPartyRoom(partyRoom.id)}
                 >
                   <div className="relative w-full h-32 bg-gray-800 overflow-hidden">
                     <img
