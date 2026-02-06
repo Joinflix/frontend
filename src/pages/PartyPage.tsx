@@ -29,11 +29,15 @@ const PartyPage = () => {
       partyId: number;
       passCode?: string;
     }) => {
-      const res = await apiClient.post(`/parties/${partyId}/join`, "1111");
+      const res = await apiClient.post(`/parties/${partyId}/join`, {
+        passCode: "1111",
+      });
       return res.data;
     },
-    onSuccess: (_, variables) => {
-      navigate(`/watch/party/${variables.partyId}`);
+    onSuccess: (data) => {
+      navigate(`/watch/party/${data.id}`, {
+        state: { partyData: data },
+      });
     },
     onError: (err) => {
       console.error(err.message);
