@@ -66,7 +66,7 @@ const CreatePartyModal = ({
       fireConfetti();
       setTimeout(() => {
         setPartyOpen(false);
-        navigate(`/watch/party/${data.partyId}`, {
+        navigate(`/watch/party/${data.id}`, {
           state: { partyData: data },
         });
       }, 1000);

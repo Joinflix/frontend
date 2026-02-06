@@ -8,7 +8,7 @@ const chevronStyle = "stroke-zinc-600 stroke-5";
 
 const PartyRoomPage = () => {
   const [isChatMinimized, setIsChatMinimized] = useState(false);
-  const { roomId } = useParams();
+  const { partyId } = useParams();
   const stompClient = useWebSocketStore((state) => state.stompClient);
   const [messages, setMessages] = useState([]);
   const location = useLocation();
@@ -20,9 +20,9 @@ const PartyRoomPage = () => {
   useEffect(() => {
     // /join 호출했을 때 error 나타나면 바로 연결
 
-    if (stompClient?.connected && roomId) {
+    if (stompClient?.connected && partyId) {
       const subscription = stompClient.subscribe(
-        `/sub/party/${roomId}`,
+        `/sub/party/${partyId}`,
         (message) => {
           const newMessage = JSON.parse(message.body);
           setMessages((prev) => [...prev, newMessage]);
@@ -31,15 +31,15 @@ const PartyRoomPage = () => {
 
       return () => {
         subscription.unsubscribe();
-        console.log(`Unsubscribed from room ${roomId}`);
+        console.log(`Unsubscribed from room ${partyId}`);
       };
     }
-  }, [stompClient, roomId]);
+  }, [stompClient, partyId]);
 
   const sendChat = (text: string) => {
     if (stompClient?.connected) {
       stompClient.publish({
-        destination: `/pub/party/${roomId}/talk`,
+        destination: `/pub/party/${partyId}/talk`,
         body: JSON.stringify({ message: text }),
       });
     }
@@ -49,6 +49,9 @@ const PartyRoomPage = () => {
     <div className="flex h-screen relative">
       {/* Video */}
       <div className="flex-1 flex items-center justify-center bg-black text-white transition-all duration-300">
+        <span className="absolute top-4 left-4 z-10 bg-black/50 px-3 py-1 pointer-events-none">
+          {partyData.movieTitle}
+        </span>
         <video
           src="/public/videos/steamboat-willie_1928.mp4"
           className="object-contain w-full h-full max-h-screen max-w-screen"

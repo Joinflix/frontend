@@ -47,7 +47,7 @@ const ChatWindow = ({
         <div className="flex flex-col py-3">
           {/* 파티룸 이름, 영화 제목 */}
           <div className="text-center text-white text-base">
-            {partyData?.roomName} ({partyData?.movieTitle})
+            {partyData?.roomName}
           </div>
           {/* 참여 인원 */}
           <div className="flex flex-row text-white/70 items-center justify-center gap-1">
