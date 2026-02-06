@@ -3,6 +3,7 @@ import { useState, useRef } from "react";
 import CreatePartyModal from "../party/CreatePartyModal";
 
 const BrowsingHero = ({
+  movieId,
   title,
   loopStart,
   loopEnd,
@@ -125,6 +126,7 @@ const BrowsingHero = ({
         partyOpen={partyOpen}
         setPartyOpen={setPartyOpen}
         title={title}
+        movieId={movieId}
       />
     </>
   );

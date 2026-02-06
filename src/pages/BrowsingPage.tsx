@@ -1,3 +1,4 @@
+import BrowsingFooter from "../components/browsing/BrowsingFooter";
 import BrowsingHeader from "../components/browsing/BrowsingHeader";
 import BrowsingHero from "../components/browsing/BrowsingHero";
 import Rank from "../components/browsing/Rank";
@@ -9,6 +10,7 @@ const BrowsingPage = () => {
     <div className="flex flex-col min-h-screen bg-black">
       <BrowsingHeader />
       <BrowsingHero
+        movieId={8}
         title={"Steamboat Willie"}
         loopStart={25}
         loopEnd={35}
@@ -23,7 +25,7 @@ const BrowsingPage = () => {
       <RowCarousel title="Cinema Classics" items={cinemaClassics} />
       <Rank />
 
-      <div>hi</div>
+      <BrowsingFooter />
     </div>
   );
 };

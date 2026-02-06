@@ -23,12 +23,14 @@ type CreatePartyModalProps = {
   partyOpen: boolean;
   setPartyOpen: React.Dispatch<React.SetStateAction<boolean>>;
   title: string;
+  movieId: number;
 };
 
 const CreatePartyModal = ({
   partyOpen,
   setPartyOpen,
   title,
+  movieId,
 }: CreatePartyModalProps) => {
   const navigate = useNavigate();
   const [partyType, setPartyType] = useState<PartyType>("PUBLIC");
@@ -81,8 +83,8 @@ const CreatePartyModal = ({
         passCode: partyType === "PRIVATE" ? data.password : null,
         isPublic: partyType === "PRIVATE" ? false : true,
         partyType: partyType,
-        movieId: 1,
-        hostControl: true,
+        movieId,
+        hostControl: data.hostControl,
       };
       // TODO: movie id 업데이트 필요
 
