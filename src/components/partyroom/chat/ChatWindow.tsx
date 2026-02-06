@@ -72,7 +72,7 @@ const ChatWindow = ({
         {/* 유저 프로필 및 닉네임 */}
         <div className="flex flex-col py-3 border-b border-t border-white/10">
           <div className="text-center text-white text-sm">
-            🎉 {partyData?.hostNickname}
+            🎉 {partyData?.hostNickname} (host)
           </div>
         </div>
 
@@ -102,7 +102,7 @@ const ChatWindow = ({
                 <div className="inline-block text-lg font-extrabold">
                   {msg.sender}
                 </div>
-                <span className="break-words">{msg.message}</span>
+                <span className="break-all ml-3">{msg.message}</span>
               </div>
             );
           })}
