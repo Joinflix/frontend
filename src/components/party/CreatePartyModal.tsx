@@ -44,8 +44,9 @@ const CreatePartyModal = ({
   } = useForm<PartyFormValues>({
     resolver: zodResolver(partySchema),
     mode: "onChange",
+    shouldUnregister: true,
     reValidateMode: "onBlur",
-    defaultValues: { name: "", password: "" },
+    defaultValues: { name: "", password: "", hostControl: true },
   });
 
   const { mutate: joinParty } = useMutation({
@@ -77,21 +78,26 @@ const CreatePartyModal = ({
   });
 
   const onSubmit = async (data: PartyFormValues) => {
+    const isPrivate = partyType === "PRIVATE";
+
     try {
       const payload = {
         roomName: data.name,
-        passCode: partyType === "PRIVATE" ? data.password : null,
-        isPublic: partyType === "PRIVATE" ? false : true,
+        passCode: isPrivate ? data.password : null,
+        isPublic: !isPrivate,
         partyType: partyType,
         movieId,
-        hostControl: data.hostControl,
+        hostControl: isPrivate ? !!data.hostControl : false,
       };
       // TODO: movie id 업데이트 필요
 
       const partyResponse = await apiClient.post<number>("/parties", payload);
       const newPartyId = partyResponse.data;
 
-      joinParty({ partyId: newPartyId, passCode: data.password });
+      joinParty({
+        partyId: newPartyId,
+        passCode: isPrivate ? data.password : undefined,
+      });
     } catch (error) {
       console.error("Failed to create party room:", error);
       // TODO: alert message 보여주기

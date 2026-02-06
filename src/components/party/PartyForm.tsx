@@ -86,18 +86,22 @@ const PartyForm = ({
               >
                 <div>
                   <input
+                    id="hostControl"
                     type="checkbox"
                     {...register("hostControl")}
                     className="w-6 h-6 accent-[#816BFF] cursor-pointer"
                     onClick={(e) => e.stopPropagation()}
                   />
                 </div>
-                <div className="flex flex-col">
+                <label
+                  htmlFor="hostControl"
+                  className="flex flex-col cursor-pointer"
+                >
                   <span className="text-sm">호스트만 영상 조절</span>
                   <span className="text-sm text-white/50">
                     호스트만 영상을 조절할 수 있어요
                   </span>
-                </div>
+                </label>
               </div>
             </div>
           </>
