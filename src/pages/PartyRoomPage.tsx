@@ -29,7 +29,6 @@ const PartyRoomPage = () => {
 
   useEffect(() => {
     if (stompClient && isConnected && partyId) {
-      console.log("SUBSCRIBING NOW!");
       const subscription = stompClient.subscribe(
         `/sub/party/${partyId}`,
         (message) => {
@@ -40,7 +39,6 @@ const PartyRoomPage = () => {
 
       return () => {
         subscription.unsubscribe();
-        console.log(`Unsubscribed from room ${partyId}`);
       };
     }
   }, [stompClient, partyId, isConnected]);

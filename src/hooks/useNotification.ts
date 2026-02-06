@@ -37,18 +37,12 @@ export const useNotification = () => {
 
     const subscribeUrl = `${API_BASE_URL}/notifications/subscribe`;
 
-    console.log("SSE 구독 시도 중...");
-
     const es = new EventSource(subscribeUrl, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
       heartbeatTimeout: 3_600_000, //1시간
     });
-
-    es.onopen = () => {
-      console.log("SSE 연결 완료. 실시간 알림 대기 중...");
-    };
 
     es.addEventListener("notification", (event) => {
       try {
@@ -92,7 +86,7 @@ export const useNotification = () => {
           });
         }
       } catch (err) {
-        console.log("Non-JSON SSE message ignored:", event.data);
+        console.error(err);
       }
     });
 
@@ -100,11 +94,9 @@ export const useNotification = () => {
     // 기본 이벤트 onmessage, 특정 이름 addEventListener 사용
     es.onmessage = (event) => {
       if (event.data === "connected") {
-        console.log("서버로부터 연결 확인 메시지 수신");
         return;
       }
       const data = JSON.parse(event.data);
-      console.log("새 알림:", data);
 
       // TODO: zustand 스토어의 알림 상태를 업데이트하거나
     };
@@ -118,7 +110,6 @@ export const useNotification = () => {
 
     // 로그아웃 시에 자동 해제?
     return () => {
-      console.log("SSE 연결 해제");
       es.close();
     };
   }, [accessToken, addNotifications, isAuthChecked, queryClient]);

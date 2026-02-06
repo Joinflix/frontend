@@ -20,7 +20,6 @@ const WebSocketProvider = () => {
         connectHeaders: {
           Authorization: `${getBearerToken(accessToken ?? "")}`,
         },
-        debug: (str) => console.log("STOMP Debug:", str),
         reconnectDelay: 5000,
         heartbeatIncoming: 4000,
         heartbeatOutgoing: 4000,
@@ -29,10 +28,6 @@ const WebSocketProvider = () => {
         },
         onDisconnect: () => {
           useWebSocketStore.getState().setIsConnected(false);
-        },
-        onStompError: (frame) => {
-          console.error("Broker reported error: " + frame.headers["message"]);
-          console.error("Additional details: " + frame.body);
         },
       });
       client.activate();
