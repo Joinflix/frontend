@@ -19,6 +19,7 @@ import AuthProvider from "../components/auth/AuthProvider";
 import AuthenticatedRoutes from "./AuthenticatedRoutes";
 import UnauthenticatedRoutes from "./UnauthenticatedRoutes";
 import WebSocketProvider from "../components/partyroom/WebSocketProvider";
+import PartyPage from "../pages/PartyPage";
 
 const routes = createBrowserRouter(
   createRoutesFromElements(
@@ -42,6 +43,7 @@ const routes = createBrowserRouter(
       </Route>
       <Route element={<AuthenticatedRoutes />}>
         <Route path="/browsing" element={<BrowsingPage />} />,
+        <Route path="/party" element={<PartyPage />} />,
         <Route element={<WebSocketProvider />}>
           <Route path="/watch">
             <Route path="party/:partyId" element={<PartyRoomPage />} />
