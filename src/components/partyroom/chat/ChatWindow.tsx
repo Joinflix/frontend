@@ -1,13 +1,12 @@
 import { User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 interface ChatMessage {
-  type: "TALK" | "ENTER" | "LEAVE" | "SYSTEM";
-  senderId: number;
-  senderNickname: string;
+  messageType: "TALK" | "ENTER" | "LEAVE" | "SYSTEM";
+  sender: string;
   message: string;
 }
 interface ChatWindowProps {
-  messages: string[];
+  messages: ChatMessage[];
   onSendMessage: (text: string) => void;
 }
 
@@ -36,8 +35,14 @@ const ChatWindow = ({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const getUsernameColor = (senderId: number) => {
-    return USER_COLORS[senderId % USER_COLORS.length];
+  const getUsernameColor = (sender: string) => {
+    if (!sender) return USER_COLORS[0];
+    let hash = 0;
+    for (let i = 0; i < sender.length; i++) {
+      hash = sender.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % USER_COLORS.length;
+    return USER_COLORS[index];
   };
 
   return (
@@ -75,7 +80,7 @@ const ChatWindow = ({
         <div className="flex-1 flex flex-col gap-2.5 overflow-y-auto overflow-x-hidden px-2 py-4">
           {messages.map((msg, index) => {
             // 알림 메시지
-            if (msg.type !== "TALK") {
+            if (msg.messageType !== "TALK") {
               return (
                 <div
                   key={index}
@@ -87,7 +92,7 @@ const ChatWindow = ({
             }
 
             // 채팅 메시지
-            const colorClass = getUsernameColor(msg.senderId);
+            const colorClass = getUsernameColor(msg.sender);
 
             return (
               <div
@@ -95,9 +100,9 @@ const ChatWindow = ({
                 className={`w-full max-w-full px-4 rounded-sm self-start ${colorClass} text-base font-light`}
               >
                 <div className="inline-block text-lg font-extrabold">
-                  {msg.user} -{" "}
+                  {msg.sender}
                 </div>
-                <span className="break-words">{msg.text}</span>
+                <span className="break-words">{msg.message}</span>
               </div>
             );
           })}

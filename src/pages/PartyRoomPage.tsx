@@ -3,23 +3,31 @@ import ChatWindow from "../components/partyroom/chat/ChatWindow";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLocation, useParams } from "react-router";
 import { useWebSocketStore } from "../store/useWebSocketStore";
+import { useAuthStore } from "../store/useAuthStore";
 
 const chevronStyle = "stroke-zinc-600 stroke-5";
+interface ChatMessage {
+  type: "TALK" | "ENTER" | "LEAVE" | "SYSTEM";
+  senderId: number;
+  senderNickname: string;
+  message: string;
+}
 
 const PartyRoomPage = () => {
   const [isChatMinimized, setIsChatMinimized] = useState(false);
   const { partyId } = useParams();
   const stompClient = useWebSocketStore((state) => state.stompClient);
-  const [messages, setMessages] = useState([]);
+
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const location = useLocation();
   const partyData = location.state?.partyData;
+
+  const accessToken = useAuthStore((state) => state.accessToken);
 
   const chatWidth = 336;
   const handleWidth = 32;
 
   useEffect(() => {
-    // /join 호출했을 때 error 나타나면 바로 연결
-
     if (stompClient?.connected && partyId) {
       const subscription = stompClient.subscribe(
         `/sub/party/${partyId}`,
@@ -40,6 +48,11 @@ const PartyRoomPage = () => {
     if (stompClient?.connected) {
       stompClient.publish({
         destination: `/pub/party/${partyId}/talk`,
+        headers: {
+          Authorization: accessToken?.startsWith("Bearer ")
+            ? accessToken
+            : `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({ message: text }),
       });
     }
