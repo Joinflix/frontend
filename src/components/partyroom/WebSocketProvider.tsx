@@ -25,7 +25,10 @@ const WebSocketProvider = () => {
         heartbeatIncoming: 4000,
         heartbeatOutgoing: 4000,
         onConnect: () => {
-          alert("Established WebSocket Connection");
+          useWebSocketStore.getState().setIsConnected(true);
+        },
+        onDisconnect: () => {
+          useWebSocketStore.getState().setIsConnected(false);
         },
         onStompError: (frame) => {
           console.error("Broker reported error: " + frame.headers["message"]);

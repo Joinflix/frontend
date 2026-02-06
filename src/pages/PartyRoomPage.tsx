@@ -7,9 +7,8 @@ import { useAuthStore } from "../store/useAuthStore";
 
 const chevronStyle = "stroke-zinc-600 stroke-5";
 interface ChatMessage {
-  type: "TALK" | "ENTER" | "LEAVE" | "SYSTEM";
-  senderId: number;
-  senderNickname: string;
+  messageType: "TALK" | "ENTER" | "LEAVE" | "SYSTEM";
+  sender: string;
   message: string;
 }
 
@@ -23,12 +22,14 @@ const PartyRoomPage = () => {
   const partyData = location.state?.partyData;
 
   const accessToken = useAuthStore((state) => state.accessToken);
+  const isConnected = useWebSocketStore((state) => state.isConnected);
 
   const chatWidth = 336;
   const handleWidth = 32;
 
   useEffect(() => {
-    if (stompClient?.connected && partyId) {
+    if (stompClient && isConnected && partyId) {
+      console.log("SUBSCRIBING NOW!");
       const subscription = stompClient.subscribe(
         `/sub/party/${partyId}`,
         (message) => {
@@ -42,7 +43,7 @@ const PartyRoomPage = () => {
         console.log(`Unsubscribed from room ${partyId}`);
       };
     }
-  }, [stompClient, partyId]);
+  }, [stompClient, partyId, isConnected]);
 
   const sendChat = (text: string) => {
     if (stompClient?.connected) {
