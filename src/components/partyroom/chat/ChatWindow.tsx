@@ -11,9 +11,9 @@ interface ChatWindowProps {
 }
 
 const USER_COLORS = [
-  "text-amber-400",
   "text-blue-400",
   "text-green-400",
+  "text-amber-400",
   "text-orange-400",
 ];
 
@@ -35,14 +35,18 @@ const ChatWindow = ({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const userColorMap = new Map<string, string>();
+  let colorIndex = 0;
+
   const getUsernameColor = (sender: string) => {
     if (!sender) return USER_COLORS[0];
-    let hash = 0;
-    for (let i = 0; i < sender.length; i++) {
-      hash = sender.charCodeAt(i) + ((hash << 5) - hash);
+
+    if (!userColorMap.has(sender)) {
+      userColorMap.set(sender, USER_COLORS[colorIndex]);
+      colorIndex = (colorIndex + 1) % USER_COLORS.length;
     }
-    const index = Math.abs(hash) % USER_COLORS.length;
-    return USER_COLORS[index];
+
+    return userColorMap.get(sender)!;
   };
 
   return (
