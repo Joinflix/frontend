@@ -1,44 +1,49 @@
 import { Outlet, useNavigate } from "react-router";
 import { useAuthStore } from "../../store/useAuthStore";
-import { useEffect } from "react";
-import apiClient from "../../api/axios";
-import { removeBearerHeader } from "../../utils/removeBearerHeader";
+import { useEffect, useState } from "react";
 import SpinnerPage from "../../pages/SpinnerPage";
+import { refreshClient } from "../../api/axios";
 
 const AuthProvider = () => {
   const navigate = useNavigate();
-
-  const { accessToken, setAuth, clearAuth, isAuthChecked } = useAuthStore();
+  const { accessToken, setAuth, isAuthChecked } = useAuthStore();
+  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
-    const refresh = async () => {
-      //1. access token 존재 시, return
-      if (accessToken) return;
+    const initAuth = async () => {
+      // ✅ If we already have a token, just mark as initialized
+      if (accessToken) {
+        setIsInitializing(false);
+        return; // isAuthChecked is already true from setAuth()
+      }
 
-      // 2. access token 부재 시, refresh 시도
       try {
-        const res = await apiClient.post("/auth/reissue");
+        const res = await refreshClient.post("/auth/reissue");
 
-        const newAccessToken = res.headers["authorization"];
-        if (!newAccessToken) throw new Error("No access token");
+        const authHeader =
+          res.headers["authorization"] || res.headers["Authorization"];
+        const newAccessToken = authHeader?.replace("Bearer ", "");
 
-        const pureNewAccessToken = removeBearerHeader(newAccessToken);
-        setAuth(pureNewAccessToken);
-
-        // TODO: user 정보 store 관리 여부 확인
-        // const payload = decodeAccessToken(newAccessToken);
-        // if (payload) setAuth(newAccessToken);
+        if (newAccessToken) {
+          setAuth(newAccessToken);
+        } else {
+          throw new Error("No access token");
+        }
       } catch (error) {
-        console.error("인증 실패:", error);
-        clearAuth();
+        console.error("Auth initialization failed:", error);
+        setAuth(null); // ✅ This also sets isAuthChecked = true
         navigate("/signin", { replace: true });
+      } finally {
+        setIsInitializing(false);
       }
     };
 
-    refresh();
-  }, [accessToken, setAuth, clearAuth, navigate]);
+    initAuth();
+  }, []); // ✅ Only run once on mount
 
-  if (!isAuthChecked) return <SpinnerPage />;
+  // ✅ Wait for both initialization AND auth check
+  if (isInitializing || !isAuthChecked) return <SpinnerPage />;
+
   return <Outlet />;
 };
 
