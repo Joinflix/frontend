@@ -17,7 +17,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { fireConfetti } from "../../utils/fireConfetti";
 import apiClient from "../../api/axios";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { CircleX, ContactRound, Mail, Search, Undo2, X } from "lucide-react";
 
 type CreatePartyDialogProps = {
   partyOpen: boolean;
@@ -25,6 +26,10 @@ type CreatePartyDialogProps = {
   title: string;
   movieId: number;
 };
+
+type DialogStep = "FORM" | "INVITE";
+
+const profileImageUrl = "";
 
 const CreatePartyDialog = ({
   partyOpen,
@@ -34,6 +39,15 @@ const CreatePartyDialog = ({
 }: CreatePartyDialogProps) => {
   const navigate = useNavigate();
   const [partyType, setPartyType] = useState<PartyType>("PUBLIC");
+  const [step, setStep] = useState<DialogStep>("FORM");
+
+  const [createdPartyId, setCreatedPartyId] = useState<number | null>(null);
+  const [savedPassword, setSavedPassword] = useState<string | undefined>();
+
+  const [searchWord, setSearchWord] = useState<string | undefined>();
+  const [selectedFriends, setSelectedFriends] = useState<number[]>([]);
+
+  const dialogWidth = step === "INVITE" ? "min-w-3xl" : "max-w-md";
 
   const {
     register,
@@ -94,19 +108,51 @@ const CreatePartyDialog = ({
       const partyResponse = await apiClient.post<number>("/parties", payload);
       const newPartyId = partyResponse.data;
 
-      joinParty({
-        partyId: newPartyId,
-        passCode: isPrivate ? data.password : undefined,
-      });
+      if (isPrivate) {
+        // 비공개 파티를 위한 UI
+        setCreatedPartyId(newPartyId);
+        setSavedPassword(data.password);
+        setStep("INVITE");
+      } else {
+        // 공개 파티는 바로 joinParty
+        joinParty({ partyId: newPartyId });
+      }
     } catch (error) {
       console.error("Failed to create party room:", error);
-      // TODO: alert message 보여주기
+      // TODO: 에러 메시지 유저에게 보여주기
     }
   };
 
+  const toggleFriend = (friendId: number) => {
+    setSelectedFriends((prev) =>
+      prev.includes(friendId)
+        ? prev.filter((id) => id !== friendId)
+        : [...prev, friendId],
+    );
+  };
+
+  const { data: friends, isPending } = useQuery({
+    queryKey: ["friends"],
+    queryFn: async () => {
+      const res = await apiClient.get(`/friends`);
+      return res.data;
+    },
+  });
+
+  const selectedFriendObjects =
+    friends?.filter((friend) => selectedFriends.includes(friend.userId)) ?? [];
+
   return (
-    <Dialog open={partyOpen} onOpenChange={setPartyOpen}>
-      <DialogContent className="bg-zinc-900 text-white border border-white/20 !max-w-105 px-13 py-10">
+    <Dialog
+      open={partyOpen}
+      onOpenChange={(open) => {
+        setPartyOpen(open);
+        if (!open) setStep("FORM");
+      }}
+    >
+      <DialogContent
+        className={`bg-zinc-900 text-white border border-white/20 !w-105 px-13 py-10 ${dialogWidth}`}
+      >
         <DialogHeader>
           <DialogTitle className="text-center text-2xl font-bold">
             {title.toUpperCase()}
@@ -114,27 +160,143 @@ const CreatePartyDialog = ({
           <DialogDescription className="text-white text-center font-bold text-xl"></DialogDescription>
         </DialogHeader>
 
-        <PartyTypeSelector value={partyType} onChange={setPartyType} />
-        <PartyForm
-          partyType={partyType}
-          register={register}
-          watch={watch}
-          setValue={setValue}
-          errors={errors}
-          touchedFields={touchedFields}
-        />
+        {step === "FORM" ? (
+          /* STEP 1: FORM VIEW */
+          <>
+            <PartyTypeSelector value={partyType} onChange={setPartyType} />
+            <PartyForm
+              partyType={partyType}
+              register={register}
+              watch={watch}
+              setValue={setValue}
+              errors={errors}
+              touchedFields={touchedFields}
+            />
 
-        <DialogFooter className="flex !justify-center gap-3 mt-4">
-          <Button className="bg-zinc-700 hover:bg-zinc-700/80 rounded-sm w-[50%]">
-            예약하기
-          </Button>
-          <Button
-            className="bg-[#816BFF] hover:bg-[#816BFF]/80 rounded-sm w-[50%]"
-            onClick={handleSubmit(onSubmit)}
-          >
-            시작하기
-          </Button>
-        </DialogFooter>
+            <DialogFooter className="flex !justify-center gap-3 mt-4">
+              <Button className="bg-zinc-700 hover:bg-zinc-700/80 rounded-sm w-[50%]">
+                예약하기
+              </Button>
+              <Button
+                className="bg-[#816BFF] hover:bg-[#816BFF]/80 rounded-sm w-[50%]"
+                onClick={handleSubmit(onSubmit)}
+              >
+                {partyType === "PRIVATE" ? "초대하기" : "시작하기"}
+              </Button>
+            </DialogFooter>
+          </>
+        ) : (
+          /* STEP 2: 초대 UI */
+
+          <div className="flex flex-col gap-6">
+            {/* Organic Search Bar */}
+            <div className="relative flex items-center group">
+              <div className="absolute left-4 text-zinc-500 transition-colors group-focus-within:text-[#816BFF]">
+                <Search size={18} />
+              </div>
+              <input
+                className="w-full bg-white/5 border border-white/5 rounded-lg py-3 pl-11 pr-11 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#816BFF]/50 transition-all"
+                type="text"
+                placeholder="닉네임 혹은 이메일로 검색"
+                value={searchWord}
+                onChange={(e) => setSearchWord(e.target.value)}
+              />
+              {searchWord && (
+                <button
+                  className="absolute right-4 text-zinc-500 hover:text-white transition-colors cursor-pointer"
+                  onClick={() => setSearchWord("")}
+                >
+                  <CircleX size={18} />
+                </button>
+              )}
+            </div>
+
+            <div className="min-h-[200px] max-h-[300px] grid grid-cols-2 gap-x-20 items-center justify-center overflow-auto">
+              {friends.map((friend) => {
+                const isSelected = selectedFriends.includes(friend.userId);
+
+                return (
+                  <div
+                    key={friend.userId}
+                    className="flex justify-between items-center p-3 hover:bg-white/5 rounded-lg transition-all duration-300 group gap-4"
+                  >
+                    <div className="flex gap-3 items-center">
+                      <div className="relative">
+                        {profileImageUrl ? (
+                          <img
+                            src={profileImageUrl}
+                            className="w-10 h-10 rounded-full object-cover border border-white/10"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-zinc-700/50 flex items-center justify-center rounded-full border border-white/5">
+                            <ContactRound size={20} className="text-zinc-500" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm text-zinc-100 font-semibold">
+                          {friend.nickname}
+                        </span>
+                        <span className="text-xs text-zinc-500">
+                          {friend.email}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => toggleFriend(friend.userId)}
+                      className={`flex items-center gap-1 px-2 py-1.5 rounded-sm text-[11px] font-bold transition-all duration-300 border backdrop-blur-md active:scale-95 cursor-pointer
+                  ${
+                    isSelected
+                      ? "bg-[#816BFF] border-[#816BFF] text-white"
+                      : "bg-[#816BFF]/40 border-[#816BFF] text-white hover:bg-[#816BFF]"
+                  }`}
+                    >
+                      {isSelected ? (
+                        <div className="flex gap-1">
+                          <Undo2 size={14} />
+                          <span>취소</span>
+                        </div>
+                      ) : (
+                        <div className="flex gap-1">
+                          <Mail size={14} />
+                          <span>초대</span>
+                        </div>
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {selectedFriendObjects.length > 0 && (
+              <div className="w-full bg-zinc-800/60 min-h-[20px] rounded-lg p-3 flex flex-wrap gap-2 items-center">
+                <span className="text-sm mx-2">
+                  {selectedFriendObjects.length}명
+                </span>
+                {selectedFriendObjects.map((friend) => (
+                  <div
+                    key={friend.userId}
+                    className="px-2 py-1 bg-[#816BFF]/20 border border-[#816BFF] text-xs rounded-full text-white flex items-center gap-0.5 cursor-pointer"
+                    onClick={() => toggleFriend(friend.userId)}
+                  >
+                    {friend.nickname}
+
+                    <X size={10} className="stroke-4 stroke-zinc-300" />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <Button
+              className="bg-[#816BFF] hover:bg-[#816BFF]/80 rounded-sm w-full"
+              onClick={() =>
+                joinParty({ partyId: createdPartyId!, passCode: savedPassword })
+              }
+            >
+              시작하기
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
