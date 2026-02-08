@@ -8,11 +8,36 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { LogOut, MessageCircleQuestionMark, UserRoundCog } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import apiClient from "../../api/axios";
+import { useNavigate } from "react-router";
+import { useAuthStore } from "../../store/useAuthStore";
 
 const ICON_STYLE = "text-white group-hover:text-black";
 
 export const ProfileDropdown = ({ iconStyle }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const { clearAuth } = useAuthStore();
+
+  const { mutate } = useMutation({
+    mutationKey: ["signout"],
+    mutationFn: async () => {
+      const res = await apiClient.post("/auth/logout");
+      return res.data;
+    },
+    onSuccess: () => {
+      clearAuth();
+      navigate("/");
+    },
+    onError: () => {
+      alert("error signing out");
+    },
+  });
+
+  const handleClickSignout = () => {
+    mutate();
+  };
 
   return (
     <div
@@ -35,7 +60,10 @@ export const ProfileDropdown = ({ iconStyle }) => {
           </DropdownMenuGroup>
           <DropdownMenuSeparator className="bg-white/5" />
           <DropdownMenuGroup>
-            <DropdownMenuItem className="group cursor-pointer text-white focus:text-black">
+            <DropdownMenuItem
+              className="group cursor-pointer text-white focus:text-black"
+              onClick={handleClickSignout}
+            >
               <LogOut className={ICON_STYLE} />
               로그아웃
             </DropdownMenuItem>
