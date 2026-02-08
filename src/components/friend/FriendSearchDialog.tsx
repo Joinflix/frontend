@@ -8,6 +8,7 @@ import {
 } from "../ui/dialog";
 import UserList from "./UserList";
 import { useAuthStore } from "../../store/useAuthStore";
+import { useRef } from "react";
 
 interface FriendSearchDialogProps {
   isOpen: boolean;
@@ -21,6 +22,9 @@ interface FriendSearchDialogProps {
   onRemove: (id: number) => void;
   onAccept: (id: number) => void;
   onRefuse: (id: number) => void;
+  hasNextPage?: boolean;
+  fetchNextPage?: () => void;
+  isFetchingNextPage?: boolean;
 }
 
 const FriendSearchDialog = ({
@@ -34,8 +38,24 @@ const FriendSearchDialog = ({
   onRemove,
   onAccept,
   onRefuse,
+  hasNextPage,
+  fetchNextPage,
+  isFetchingNextPage,
 }: FriendSearchDialogProps) => {
   const userId = useAuthStore((state) => state.user?.userId);
+
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = () => {
+    const container = scrollContainerRef.current;
+    if (!container || !hasNextPage || isFetchingNextPage) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    if (scrollTop + clientHeight >= scrollHeight - 50) {
+      fetchNextPage?.();
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -72,28 +92,51 @@ const FriendSearchDialog = ({
         </DialogHeader>
 
         {/* User List Area */}
-        <div className="mt-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-1">
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="mt-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-1"
+        >
           {isLoading ? (
             <div className="text-center py-10 text-zinc-500 text-sm animate-pulse">
               사용자를 불러오는 중...
             </div>
           ) : users?.length > 0 ? (
-            users
-              .filter((user) => user.id !== userId)
-              .map((user) => (
-                <UserList
-                  key={user.id}
-                  user={user}
-                  onRequest={() => onRequest(user.id)}
-                  onRemove={() => onRemove(user.requestId)}
-                  onAccept={() => onAccept(user.requestId)}
-                  onRefuse={() => onRefuse(user.requestId)}
-                />
-              ))
+            <>
+              {users
+                .filter((user) => user.id !== userId)
+                .map((user) => (
+                  <UserList
+                    key={user.id}
+                    user={user}
+                    onRequest={() => onRequest(user.id)}
+                    onRemove={() => onRemove(user.requestId)}
+                    onAccept={() => onAccept(user.requestId)}
+                    onRefuse={() => onRefuse(user.requestId)}
+                  />
+                ))}
+
+              {/* This is the invisible trigger element */}
+              <div ref={triggerRef} className="py-4 flex justify-center">
+                {isFetchingNextPage ? (
+                  <div className="text-xs text-[#816BFF] animate-pulse">
+                    더 불러오는 중...
+                  </div>
+                ) : hasNextPage ? (
+                  <div className="h-2" /> // Spacer that triggers the fetch
+                ) : (
+                  <div className="text-xs text-zinc-600 italic">
+                    마지막 사용자입니다.
+                  </div>
+                )}
+              </div>
+            </>
           ) : (
-            <div className="text-center py-10 text-zinc-500 text-sm italic">
-              {searchWord ? "검색 결과가 없습니다." : "검색어를 입력해보세요."}
-            </div>
+            <>
+              <div className="text-center py-10 text-zinc-500 text-sm">
+                사용자가 없습니다.
+              </div>
+            </>
           )}
         </div>
       </DialogContent>
