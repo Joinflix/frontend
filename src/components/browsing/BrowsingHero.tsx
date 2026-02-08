@@ -1,6 +1,6 @@
 import { MessageSquareMore, Play } from "lucide-react";
 import { useState, useRef } from "react";
-import CreatePartyModal from "../party/CreatePartyModal";
+import CreatePartyModal from "../party/CreatePartyDialog";
 
 const BrowsingHero = ({
   movieId,

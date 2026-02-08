@@ -19,19 +19,19 @@ import { fireConfetti } from "../../utils/fireConfetti";
 import apiClient from "../../api/axios";
 import { useMutation } from "@tanstack/react-query";
 
-type CreatePartyModalProps = {
+type CreatePartyDialogProps = {
   partyOpen: boolean;
   setPartyOpen: React.Dispatch<React.SetStateAction<boolean>>;
   title: string;
   movieId: number;
 };
 
-const CreatePartyModal = ({
+const CreatePartyDialog = ({
   partyOpen,
   setPartyOpen,
   title,
   movieId,
-}: CreatePartyModalProps) => {
+}: CreatePartyDialogProps) => {
   const navigate = useNavigate();
   const [partyType, setPartyType] = useState<PartyType>("PUBLIC");
 
@@ -140,4 +140,4 @@ const CreatePartyModal = ({
   );
 };
 
-export default CreatePartyModal;
+export default CreatePartyDialog;

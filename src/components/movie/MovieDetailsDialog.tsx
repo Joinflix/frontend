@@ -9,7 +9,7 @@ import {
 } from "../ui/dialog";
 import apiClient from "../../api/axios";
 import { ContactRound, MessageSquareMore, Play, Star } from "lucide-react";
-import CreatePartyModal from "../party/CreatePartyModal";
+import CreatePartyModal from "../party/CreatePartyDialog";
 import { useState } from "react";
 
 interface MovieDetailsDialogProps {
