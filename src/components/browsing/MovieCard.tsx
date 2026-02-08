@@ -1,6 +1,9 @@
-const MovieCard = ({ item }) => {
+const MovieCard = ({ item, onClick }) => {
   return (
-    <div className="relative min-w-[100px] md:min-w-[150px] lg:min-w-[260px] cursor-pointer transition-transform duration-300 hover:scale-105 hover:z-50">
+    <div
+      className="relative min-w-[100px] md:min-w-[150px] lg:min-w-[260px] cursor-pointer transition-transform duration-300 hover:scale-105 hover:z-50"
+      onClick={onClick}
+    >
       <img
         src={item.poster}
         className="w-full h-full object-cover rounded-md"
