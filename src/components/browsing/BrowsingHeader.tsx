@@ -7,6 +7,7 @@ import FriendSearchDialog from "../friend/FriendSearchDialog";
 import { AlertDropdown } from "./AlertDropdown";
 import { ProfileDropdown } from "./ProfileDropdown";
 import { useFriendActions } from "../../api/queries/useFriendActions";
+import { useAuthStore } from "../../store/useAuthStore";
 
 const ICON_STYLE = "w-7 h-7 stroke-white cursor-pointer";
 
@@ -16,6 +17,8 @@ const BrowsingHeader = () => {
 
   const [isFriendSearchOpen, setIsFriendSearchOpen] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
   const [searchWord, setSearchWord] = useState("");
   const [pendingRequestIds, setPendingRequestIds] = useState<Set<number>>(
     new Set(),
@@ -24,9 +27,7 @@ const BrowsingHeader = () => {
   const { requestFriend, removeFriend, acceptFriend, refuseFriend } =
     useFriendActions(setPendingRequestIds);
 
-  const handleClickLogo = () => {
-    navigate("/browsing");
-  };
+  const nickname = useAuthStore((state) => state.user?.nickName);
 
   const handleClickFriendSearch = () => {
     setIsFriendSearchOpen(true);
@@ -139,7 +140,21 @@ const BrowsingHeader = () => {
           onOpenChange={setIsAlertOpen}
           iconStyle={ICON_STYLE}
         />
-        <ProfileDropdown iconStyle={ICON_STYLE} />
+
+        <div
+          className="flex flex-row gap-2 items-center ml-2 cursor-pointer"
+          onClick={() => setIsProfileOpen((prev) => !prev)}
+        >
+          <ProfileDropdown
+            isOpen={isProfileOpen}
+            onOpenChange={setIsProfileOpen}
+            iconStyle={ICON_STYLE}
+            initial={nickname?.charAt(0)}
+          />
+          <span className="text-extrabold text-white text-base">
+            {nickname}
+          </span>
+        </div>
       </div>
     </header>
   );

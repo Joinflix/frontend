@@ -15,8 +15,19 @@ import { useAuthStore } from "../../store/useAuthStore";
 
 const ICON_STYLE = "text-white group-hover:text-black";
 
-export const ProfileDropdown = ({ iconStyle }) => {
-  const [isOpen, setIsOpen] = useState(false);
+interface ProfileDropdownProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  iconStyle: string;
+  initial: string;
+}
+
+export const ProfileDropdown = ({
+  isOpen,
+  onOpenChange,
+  iconStyle,
+  initial,
+}: ProfileDropdownProps) => {
   const navigate = useNavigate();
   const { clearAuth } = useAuthStore();
 
@@ -40,36 +51,35 @@ export const ProfileDropdown = ({ iconStyle }) => {
   };
 
   return (
-    <div
-      onMouseEnter={() => setIsOpen(true)}
-      onMouseLeave={() => setIsOpen(false)}
-    >
-      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-        <DropdownMenuTrigger asChild>
-          <div className={`${iconStyle} bg-white ml-2 rounded-sm`} />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="bg-zinc-900/90 backdrop-blur-xl border border-white/10 text-white rounded-xl mt-2 min-w-[130px]">
-          <DropdownMenuGroup>
-            <DropdownMenuItem className="group cursor-pointer">
-              <UserRoundCog className={ICON_STYLE} /> 프로필 관리
-            </DropdownMenuItem>
-            <DropdownMenuItem className="group cursor-pointer">
-              <MessageCircleQuestionMark className={ICON_STYLE} />
-              고객센터
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-          <DropdownMenuSeparator className="bg-white/5" />
-          <DropdownMenuGroup>
-            <DropdownMenuItem
-              className="group cursor-pointer text-white focus:text-black"
-              onClick={handleClickSignout}
-            >
-              <LogOut className={ICON_STYLE} />
-              로그아웃
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+    <DropdownMenu open={isOpen} onOpenChange={onOpenChange}>
+      <DropdownMenuTrigger asChild>
+        <div
+          className={`${iconStyle} bg-[#816BFF] ml-2 rounded-full text-center justify-center text-lg [-webkit-text-stroke:1px] text-white`}
+        >
+          {initial}
+        </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="bg-zinc-900/90 backdrop-blur-xl border border-white/10 text-white rounded-xl mt-2 min-w-[130px]">
+        <DropdownMenuGroup>
+          <DropdownMenuItem className="group cursor-pointer">
+            <UserRoundCog className={ICON_STYLE} /> 프로필 관리
+          </DropdownMenuItem>
+          <DropdownMenuItem className="group cursor-pointer">
+            <MessageCircleQuestionMark className={ICON_STYLE} />
+            고객센터
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator className="bg-white/5" />
+        <DropdownMenuGroup>
+          <DropdownMenuItem
+            className="group cursor-pointer text-white focus:text-black"
+            onClick={handleClickSignout}
+          >
+            <LogOut className={ICON_STYLE} />
+            로그아웃
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
