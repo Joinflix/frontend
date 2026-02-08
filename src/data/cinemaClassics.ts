@@ -1,13 +1,13 @@
 export const cinemaClassics = [
   {
     id: 1,
-    title: "Steamboat Willie (1928)",
+    title: "A Trip to the Moon (1902)",
     poster:
-      "https://m.media-amazon.com/images/M/MV5BODhlNGQyZTAtNGE0ZS00OWVhLTkzODQtOTBiMmQ2ODZjNzI2XkEyXkFqcGc@._V1_.jpg",
+      "https://m.media-amazon.com/images/M/MV5BODM2ODk2OTgtYzEwMy00MDVlLWE0Y2ItMDFjNGEwNjYzZWViXkEyXkFqcGc@._V1_FMjpg_UX902_.jpg",
     backdrop:
-      "https://m.media-amazon.com/images/M/MV5BY2ZjMGE0NzItNjEyNi00YjJhLWI1N2YtNWYzOGQ5NzQzODA2XkEyXkFqcGc@._V1_.jpg",
+      "https://m.media-amazon.com/images/M/MV5BMTQ1NDk1MTAwMF5BMl5BanBnXkFtZTcwODQ3NzMyNQ@@._V1_.jpg",
     description:
-      "The historic debut of Mickey Mouse, this short film revolutionized the industry as one of the first cartoons with fully synchronized sound. Its playful use of music and rhythm transformed animation into a multi-sensory experience, launching a global cultural phenomenon.",
+      "Georges Méliès' imaginative masterpiece is one of the earliest examples of science fiction on film. Known for its iconic shot of a rocket landing in the eye of the Man in the Moon, it pioneered innovative special effects, theatrical set design, and narrative fantasy.",
     video: "",
   },
   {
@@ -78,13 +78,13 @@ export const cinemaClassics = [
   },
   {
     id: 8,
-    title: "A Trip to the Moon (1902)",
+    title: "Steamboat Willie (1928)",
     poster:
-      "https://m.media-amazon.com/images/M/MV5BODM2ODk2OTgtYzEwMy00MDVlLWE0Y2ItMDFjNGEwNjYzZWViXkEyXkFqcGc@._V1_FMjpg_UX902_.jpg",
+      "https://m.media-amazon.com/images/M/MV5BODhlNGQyZTAtNGE0ZS00OWVhLTkzODQtOTBiMmQ2ODZjNzI2XkEyXkFqcGc@._V1_.jpg",
     backdrop:
-      "https://m.media-amazon.com/images/M/MV5BMTQ1NDk1MTAwMF5BMl5BanBnXkFtZTcwODQ3NzMyNQ@@._V1_.jpg",
+      "https://m.media-amazon.com/images/M/MV5BY2ZjMGE0NzItNjEyNi00YjJhLWI1N2YtNWYzOGQ5NzQzODA2XkEyXkFqcGc@._V1_.jpg",
     description:
-      "Georges Méliès' imaginative masterpiece is one of the earliest examples of science fiction on film. Known for its iconic shot of a rocket landing in the eye of the Man in the Moon, it pioneered innovative special effects, theatrical set design, and narrative fantasy.",
+      "The historic debut of Mickey Mouse, this short film revolutionized the industry as one of the first cartoons with fully synchronized sound. Its playful use of music and rhythm transformed animation into a multi-sensory experience, launching a global cultural phenomenon.",
     video: "",
   },
 ];
