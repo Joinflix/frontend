@@ -23,34 +23,37 @@ import PartyPage from "../pages/PartyPage";
 
 const routes = createBrowserRouter(
   createRoutesFromElements(
-    <Route element={<AuthProvider />}>
-      <Route element={<UnauthenticatedRoutes />}>
-        <Route index element={<LandingPage />} />;
-        <Route path="/signin" element={<SigninPage />}>
-          <Route index element={<PasswordSignin />} />
+    <>
+      <Route index element={<LandingPage />} />;
+      <Route element={<AuthProvider />}>
+        <Route element={<UnauthenticatedRoutes />}>
+          <Route path="/signin" element={<SigninPage />}>
+            <Route index element={<PasswordSignin />} />
+          </Route>
+          <Route path="/signup" element={<SignupPage />}>
+            <Route path="step1-send-code" element={<Step1SendCode />} />
+            <Route path="step1-confirm-code" element={<Step1ConfirmCode />} />
+            <Route path="step2-set-password" element={<Step2SetPassword />} />
+            <Route path="step3-set-nickname" element={<Step3SetNickname />} />
+            <Route
+              path="step4-list-membership"
+              element={<Step4ListMembership />}
+            />
+            <Route path="step4-select-plan" element={<Step4SelectPlan />} />
+          </Route>
         </Route>
-        <Route path="/signup" element={<SignupPage />}>
-          <Route path="step1-send-code" element={<Step1SendCode />} />
-          <Route path="step1-confirm-code" element={<Step1ConfirmCode />} />
-          <Route path="step2-set-password" element={<Step2SetPassword />} />
-          <Route path="step3-set-nickname" element={<Step3SetNickname />} />
-          <Route
-            path="step4-list-membership"
-            element={<Step4ListMembership />}
-          />
-          <Route path="step4-select-plan" element={<Step4SelectPlan />} />
-        </Route>
-      </Route>
-      <Route element={<AuthenticatedRoutes />}>
-        <Route path="/browsing" element={<BrowsingPage />} />,
-        <Route path="/party" element={<PartyPage />} />,
-        <Route element={<WebSocketProvider />}>
-          <Route path="/watch">
-            <Route path="party/:partyId" element={<PartyRoomPage />} />
+        <Route element={<AuthenticatedRoutes />}>
+          <Route path="/browsing" element={<BrowsingPage />} />,
+          <Route path="/party" element={<PartyPage />} />,
+          <Route element={<WebSocketProvider />}>
+            <Route path="/watch">
+              <Route path="party/:partyId" element={<PartyRoomPage />} />
+            </Route>
           </Route>
         </Route>
       </Route>
-    </Route>,
+      ,
+    </>,
   ),
 );
 
