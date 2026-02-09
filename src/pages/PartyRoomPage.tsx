@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ChatWindow from "../components/partyroom/chat/ChatWindow";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useLocation, useParams } from "react-router";
+import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { useLocation, useNavigate, useParams } from "react-router";
 import { useWebSocketStore } from "../store/useWebSocketStore";
 import { useAuthStore } from "../store/useAuthStore";
 
@@ -13,6 +13,7 @@ interface ChatMessage {
 }
 
 const PartyRoomPage = () => {
+  const navigate = useNavigate();
   const [isChatMinimized, setIsChatMinimized] = useState(false);
   const { partyId } = useParams();
   const stompClient = useWebSocketStore((state) => state.stompClient);
@@ -26,6 +27,40 @@ const PartyRoomPage = () => {
 
   const chatWidth = 336;
   const handleWidth = 32;
+
+  const handleClickOut = () => {
+    if (stompClient?.connected) {
+      stompClient.publish({
+        destination: `/pub/party/${partyId}/leave`,
+        headers: {
+          Authorization: accessToken?.startsWith("Bearer ")
+            ? accessToken
+            : `Bearer ${accessToken}`,
+        },
+      });
+    }
+    navigate(-1);
+  };
+
+  useEffect(() => {
+    const sendLeaveMessage = () => {
+      if (stompClient?.connected) {
+        stompClient.publish({
+          destination: `/pub/party/${partyId}/leave`,
+          headers: {
+            Authorization: accessToken?.startsWith("Bearer ")
+              ? accessToken
+              : `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({}),
+        });
+      }
+    };
+
+    return () => {
+      sendLeaveMessage();
+    };
+  }, [partyId, stompClient, accessToken]);
 
   useEffect(() => {
     if (stompClient && isConnected && partyId) {
@@ -61,9 +96,16 @@ const PartyRoomPage = () => {
     <div className="flex h-screen relative">
       {/* Video */}
       <div className="flex-1 flex items-center justify-center bg-black text-white transition-all duration-300">
-        <span className="absolute top-4 left-4 z-10 bg-black/50 px-3 py-1 pointer-events-none">
-          {partyData.movieTitle}
-        </span>
+        <div className="absolute top-4 left-4 z-10  px-3 py-1 ">
+          <div className="flex items-center gap-1">
+            <ArrowLeft
+              size={20}
+              className="cursor-pointer top-4 left-4 z-10 hover:scale-120 transition-transform stroke-3"
+              onClick={handleClickOut}
+            />
+            <span className="pointer-events-none">{partyData.movieTitle}</span>
+          </div>
+        </div>
         <video
           src="/public/videos/steamboat-willie_1928.mp4"
           className="object-contain w-full h-full max-h-screen max-w-screen"
