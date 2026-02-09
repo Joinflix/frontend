@@ -18,7 +18,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { fireConfetti } from "../../utils/fireConfetti";
 import apiClient from "../../api/axios";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CircleX, ContactRound, Mail, Search, Undo2, X } from "lucide-react";
+import {
+  CircleX,
+  ContactRound,
+  DoorOpen,
+  Mail,
+  Search,
+  Send,
+  Undo2,
+  X,
+} from "lucide-react";
 
 type CreatePartyDialogProps = {
   partyOpen: boolean;
@@ -41,11 +50,11 @@ const CreatePartyDialog = ({
   const [partyType, setPartyType] = useState<PartyType>("PUBLIC");
   const [step, setStep] = useState<DialogStep>("FORM");
 
-  const [createdPartyId, setCreatedPartyId] = useState<number | null>(null);
-  const [savedPassword, setSavedPassword] = useState<string | undefined>();
-
   const [searchWord, setSearchWord] = useState<string | undefined>();
   const [selectedFriends, setSelectedFriends] = useState<number[]>([]);
+
+  const [pendingPrivateData, setPendingPrivateData] =
+    useState<PartyFormValues | null>(null);
 
   const dialogWidth = step === "INVITE" ? "min-w-3xl" : "max-w-md";
 
@@ -63,7 +72,11 @@ const CreatePartyDialog = ({
     defaultValues: { name: "", password: "", hostControl: true },
   });
 
-  const { mutate: joinParty } = useMutation({
+  const {
+    mutate: joinParty,
+    isPending: joinPartyIsPending,
+    isSuccess: joinPartyIsSuccess,
+  } = useMutation({
     mutationKey: ["joinParty"],
     mutationFn: async ({
       partyId,
@@ -91,36 +104,41 @@ const CreatePartyDialog = ({
     },
   });
 
-  const onSubmit = async (data: PartyFormValues) => {
+  const {
+    mutate: createParty,
+    isPending: createPartyIsPending,
+    isSuccess: createPartyIsSuccess,
+  } = useMutation({
+    mutationFn: async (payload) => {
+      const res = await apiClient.post<number>("/parties", payload);
+      return res.data;
+    },
+    onSuccess: (partyId, variables) => {
+      joinParty({ partyId, passCode: variables.passCode });
+    },
+    onError: (error) => {
+      console.error("Failed to create party", error);
+    },
+  });
+
+  const onSubmit = (data: PartyFormValues) => {
     const isPrivate = partyType === "PRIVATE";
 
-    try {
+    if (!isPrivate) {
       const payload = {
         roomName: data.name,
-        passCode: isPrivate ? data.password : null,
-        isPublic: !isPrivate,
-        partyType: partyType,
+        passCode: null,
+        isPublic: true,
+        partyType,
         movieId,
-        hostControl: isPrivate ? !!data.hostControl : false,
+        hostControl: false,
+        invitedUserIds: [],
       };
-      // TODO: movie id 업데이트 필요
-
-      const partyResponse = await apiClient.post<number>("/parties", payload);
-      const newPartyId = partyResponse.data;
-
-      if (isPrivate) {
-        // 비공개 파티를 위한 UI
-        setCreatedPartyId(newPartyId);
-        setSavedPassword(data.password);
-        setStep("INVITE");
-      } else {
-        // 공개 파티는 바로 joinParty
-        joinParty({ partyId: newPartyId });
-      }
-    } catch (error) {
-      console.error("Failed to create party room:", error);
-      // TODO: 에러 메시지 유저에게 보여주기
+      createParty(payload);
+      return;
     }
+    setPendingPrivateData(data);
+    setStep("INVITE");
   };
 
   const toggleFriend = (friendId: number) => {
@@ -141,6 +159,28 @@ const CreatePartyDialog = ({
 
   const selectedFriendObjects =
     friends?.filter((friend) => selectedFriends.includes(friend.userId)) ?? [];
+
+  const handleClickStartPrivateParty = () => {
+    if (!pendingPrivateData) return;
+
+    const payload = {
+      roomName: pendingPrivateData.name,
+      passCode: pendingPrivateData.password,
+      isPublic: false,
+      partyType,
+      movieId,
+      hostControl: !!pendingPrivateData.hostControl,
+      invitedUserIds: selectedFriends,
+    };
+
+    createParty(payload);
+  };
+
+  const isWorking =
+    createPartyIsPending ||
+    joinPartyIsPending ||
+    createPartyIsSuccess ||
+    joinPartyIsSuccess;
 
   return (
     <Dialog
@@ -243,13 +283,15 @@ const CreatePartyDialog = ({
                       </div>
                     </div>
                     <button
+                      disabled={createPartyIsPending || joinPartyIsPending}
                       onClick={() => toggleFriend(friend.userId)}
-                      className={`flex items-center gap-1 px-2 py-1.5 rounded-sm text-[11px] font-bold transition-all duration-300 border backdrop-blur-md active:scale-95 cursor-pointer
+                      className={`flex items-center gap-1 px-2 py-1.5 rounded-sm text-[11px] font-bold transition-all duration-300 border backdrop-blur-md active:scale-95
                   ${
                     isSelected
                       ? "bg-[#816BFF] border-[#816BFF] text-white"
                       : "bg-[#816BFF]/40 border-[#816BFF] text-white hover:bg-[#816BFF]"
-                  }`}
+                  }
+                  ${createPartyIsPending || joinPartyIsPending ? "cursor-none" : "cursor-pointer"}`}
                     >
                       {isSelected ? (
                         <div className="flex gap-1">
@@ -276,11 +318,13 @@ const CreatePartyDialog = ({
                 {selectedFriendObjects.map((friend) => (
                   <div
                     key={friend.userId}
-                    className="px-2 py-1 bg-[#816BFF]/20 border border-[#816BFF] text-xs rounded-full text-white flex items-center gap-0.5 cursor-pointer"
-                    onClick={() => toggleFriend(friend.userId)}
+                    className={`px-2 py-1 bg-[#816BFF]/20 border border-[#816BFF] text-xs rounded-full text-white flex items-center gap-0.5 ${createPartyIsPending || joinPartyIsPending ? "cursor-none" : "cursor-pointer"}`}
+                    onClick={() => {
+                      if (createPartyIsPending || joinPartyIsPending) return;
+                      toggleFriend(friend.userId);
+                    }}
                   >
                     {friend.nickname}
-
                     <X size={10} className="stroke-4 stroke-zinc-300" />
                   </div>
                 ))}
@@ -288,12 +332,23 @@ const CreatePartyDialog = ({
             )}
 
             <Button
+              disabled={selectedFriends.length === 0 || isWorking}
               className="bg-[#816BFF] hover:bg-[#816BFF]/80 rounded-sm w-full"
-              onClick={() =>
-                joinParty({ partyId: createdPartyId!, passCode: savedPassword })
-              }
+              onClick={handleClickStartPrivateParty}
             >
-              시작하기
+              {createPartyIsPending ? (
+                <div className="flex items-center gap-2">
+                  <Send size={18} />
+                  <span>초대장 발송 중</span>
+                </div>
+              ) : joinPartyIsPending || joinPartyIsSuccess ? (
+                <div className="flex items-center gap-2">
+                  <DoorOpen size={18} />
+                  <span>파티 입장 중</span>
+                </div>
+              ) : (
+                "시작하기"
+              )}
             </Button>
           </div>
         )}
