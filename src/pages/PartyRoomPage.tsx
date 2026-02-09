@@ -43,7 +43,30 @@ const PartyRoomPage = () => {
   };
 
   useEffect(() => {
-    const sendLeaveMessage = () => {
+    if (!stompClient || !isConnected || !partyId) return;
+
+    const subscription = stompClient.subscribe(
+      `/sub/party/${partyId}`,
+      (message) => {
+        const newMessage = JSON.parse(message.body);
+        setMessages((prev) => [...prev, newMessage]);
+      },
+    );
+
+    // Send ENTER after subscribing
+    stompClient.publish({
+      destination: `/pub/party/${partyId}/enter`,
+      headers: {
+        Authorization: accessToken?.startsWith("Bearer ")
+          ? accessToken
+          : `Bearer ${accessToken}`,
+      },
+    });
+
+    return () => {
+      subscription.unsubscribe();
+
+      // send LEAVE on unmount
       if (stompClient?.connected) {
         stompClient.publish({
           destination: `/pub/party/${partyId}/leave`,
@@ -52,31 +75,10 @@ const PartyRoomPage = () => {
               ? accessToken
               : `Bearer ${accessToken}`,
           },
-          body: JSON.stringify({}),
         });
       }
     };
-
-    return () => {
-      sendLeaveMessage();
-    };
-  }, [partyId, stompClient, accessToken]);
-
-  useEffect(() => {
-    if (stompClient && isConnected && partyId) {
-      const subscription = stompClient.subscribe(
-        `/sub/party/${partyId}`,
-        (message) => {
-          const newMessage = JSON.parse(message.body);
-          setMessages((prev) => [...prev, newMessage]);
-        },
-      );
-
-      return () => {
-        subscription.unsubscribe();
-      };
-    }
-  }, [stompClient, partyId, isConnected]);
+  }, [stompClient, isConnected, partyId, accessToken]);
 
   const sendChat = (text: string) => {
     if (stompClient?.connected) {
