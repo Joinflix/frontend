@@ -10,6 +10,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "../components/ui/input-otp";
+import { FALLBACK_ERROR_MESSAGE } from "../global/const/error";
 
 const OTP_BOX_STYLE =
   "!rounded-xs border w-13 h-15 border-[#816BFF] bg-[#816BFF]/10 text-4xl font-extrabold text-[#816BFF]";
@@ -58,9 +59,8 @@ const PartyPage = () => {
         state: { partyData: data },
       });
     },
-    onError: (err) => {
-      console.error(err.message);
-      alert(err.message);
+    onError: (err: any) => {
+      alert(err.response?.data?.message || FALLBACK_ERROR_MESSAGE);
     },
   });
 
