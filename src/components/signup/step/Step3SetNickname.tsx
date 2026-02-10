@@ -71,7 +71,7 @@ const Step3SetNickname = () => {
     nickname,
     onSuccess: () => {
       alert("성공적으로 가입을 완료하였습니다.");
-      navigate("/signin", { replace: true });
+      navigate("/signup/step4-list-membership", { replace: true });
     },
   });
 
