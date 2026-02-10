@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ChatWindow from "../components/partyroom/chat/ChatWindow";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router";
 import { useWebSocketStore } from "../store/useWebSocketStore";
 import { useAuthStore } from "../store/useAuthStore";
+import apiClient from "../api/axios";
 
 const chevronStyle = "stroke-zinc-600 stroke-5";
 interface ChatMessage {
@@ -14,19 +15,35 @@ interface ChatMessage {
 
 const PartyRoomPage = () => {
   const navigate = useNavigate();
-  const [isChatMinimized, setIsChatMinimized] = useState(false);
   const { partyId } = useParams();
+  const location = useLocation();
+
+  const [isChatMinimized, setIsChatMinimized] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const stompClient = useWebSocketStore((state) => state.stompClient);
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const location = useLocation();
-  const partyData = location.state?.partyData;
+  const [partyData, setPartyData] = useState(location.state?.partyData);
 
   const accessToken = useAuthStore((state) => state.accessToken);
   const isConnected = useWebSocketStore((state) => state.isConnected);
 
+  const [isHostControl, setIsHostControl] = useState(true); // host-controlled by default
+  const isHost =
+    partyData?.hostId === useAuthStore((state) => state.user?.userId);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoState, setVideoState] = useState({
+    currentTime: 0,
+    paused: true,
+  });
+
   const chatWidth = 336;
   const handleWidth = 32;
+
+  useEffect(() => {
+    if (!partyData && partyId) {
+      apiClient.get(`/party/${partyId}`).then((res) => setPartyData(res.data));
+    }
+  }, [partyData, partyId]);
 
   const handleClickOut = () => {
     if (stompClient?.connected) {
@@ -94,6 +111,80 @@ const PartyRoomPage = () => {
     }
   };
 
+  const handleVideoEvent = () => {
+    if (!videoRef.current) return;
+
+    const state = {
+      currentTime: videoRef.current.currentTime,
+      paused: videoRef.current.paused,
+    };
+
+    // Only send if allowed
+    if (isHostControl && isHost) {
+      stompClient?.publish({
+        destination: `/pub/party/${partyId}/video`,
+        body: JSON.stringify(state),
+        headers: {
+          Authorization: accessToken?.startsWith("Bearer ")
+            ? accessToken
+            : `Bearer ${accessToken}`,
+        },
+      });
+    } else if (!isHostControl) {
+      // everyone can control
+      stompClient?.publish({
+        destination: `/pub/party/${partyId}/video`,
+        body: JSON.stringify(state),
+        headers: {
+          Authorization: accessToken?.startsWith("Bearer ")
+            ? accessToken
+            : `Bearer ${accessToken}`,
+        },
+      });
+    }
+  };
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.addEventListener("play", handleVideoEvent);
+    video.addEventListener("pause", handleVideoEvent);
+    video.addEventListener("seeked", handleVideoEvent);
+
+    return () => {
+      video.removeEventListener("play", handleVideoEvent);
+      video.removeEventListener("pause", handleVideoEvent);
+      video.removeEventListener("seeked", handleVideoEvent);
+    };
+  }, [isHostControl, isHost]);
+
+  useEffect(() => {
+    if (!stompClient || !isConnected || !partyId) return;
+
+    const sub = stompClient.subscribe(`/sub/party/${partyId}/video`, (msg) => {
+      const { currentTime, paused } = JSON.parse(msg.body);
+
+      if (isHostControl && !isHost) {
+        // Only sync if not host in host-controlled mode
+        if (videoRef.current) {
+          videoRef.current.currentTime = currentTime;
+          if (paused) videoRef.current.pause();
+          else videoRef.current.play();
+        }
+      } else if (!isHostControl) {
+        // Everyone sync
+        if (videoRef.current) {
+          videoRef.current.currentTime = currentTime;
+          if (paused) videoRef.current.pause();
+          else videoRef.current.play();
+        }
+      }
+    });
+
+    return () => sub.unsubscribe();
+  }, [stompClient, partyId, isHostControl, isHost, isConnected]);
+
   return (
     <div className="flex h-screen relative">
       {/* Video */}
@@ -109,9 +200,10 @@ const PartyRoomPage = () => {
           </div>
         </div>
         <video
+          ref={videoRef}
           src="/public/videos/steamboat-willie_1928.mp4"
           className="object-contain w-full h-full max-h-screen max-w-screen"
-          controls
+          controls={!isHostControl || isHost} // host-only controls if hostControl mode
         />
       </div>
 
