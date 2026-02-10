@@ -32,7 +32,6 @@ const AuthProvider = () => {
       } catch (error) {
         console.error("Auth initialization failed:", error);
         setAuth(null); // ✅ This also sets isAuthChecked = true
-        navigate("/signin", { replace: true });
       } finally {
         setIsInitializing(false);
       }
