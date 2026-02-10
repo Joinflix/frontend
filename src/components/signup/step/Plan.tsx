@@ -1,22 +1,21 @@
 import Block from "./Block";
 
-const Plan = ({
-  plan,
-}: {
+interface PlanProps {
   plan: {
+    id: number; // Added ID for API
     name: string;
     gradient: string;
+    price: number; // Added price for payment
     features: { title: string; description: string }[];
   };
-}) => {
-  const handleClickPlan = () => {
-    alert(plan.name);
-  };
+  onSelect: (id: number, price: number, name: string) => void;
+}
 
+const Plan = ({ plan, onSelect }: PlanProps) => {
   return (
     <div
       className="border border-gray-300 p-2 rounded-lg cursor-pointer hover:scale-107 transition-transform"
-      onClick={handleClickPlan}
+      onClick={() => onSelect(plan.id, plan.price, plan.name)}
     >
       {/* color block */}
       <div

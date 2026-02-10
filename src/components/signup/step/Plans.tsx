@@ -1,4 +1,11 @@
+import { useEffect } from "react";
 import Plan from "./Plan";
+
+declare global {
+  interface Window {
+    IMP: any;
+  }
+}
 
 const planData = [
   {
@@ -46,11 +53,64 @@ const planData = [
   },
 ];
 
-export const Plans = () => {
+export const Plans = ({ onSuccess }: { onSuccess: () => void }) => {
+  useEffect(() => {
+    if (window.IMP) window.IMP.init("imp10502566");
+  }, []);
+
+  const handleRequestPay = (
+    membershipId: number,
+    amount: number,
+    planName: string,
+  ) => {
+    const token = localStorage.getItem("token"); // Assuming token is in localStorage
+    if (!token) return alert("로그인이 필요합니다.");
+
+    window.IMP.request_pay(
+      {
+        pg: "html5_inicis",
+        pay_method: "card",
+        merchant_uid: `ORD-${membershipId}-${Date.now()}`,
+        name: `JoinFlex ${planName}`,
+        amount: amount,
+        buyer_email: "test@test.com",
+      },
+      async (rsp: any) => {
+        if (rsp.success) {
+          try {
+            const response = await fetch("/api/payments/complete", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                imp_uid: rsp.imp_uid,
+                merchant_uid: rsp.merchant_uid,
+                paid_amount: rsp.paid_amount,
+                membershipId: membershipId,
+                pay_method: rsp.pay_method,
+                status: "paid",
+              }),
+            });
+            if (response.ok) {
+              alert("결제 완료!");
+              onSuccess(); // Refresh history
+            }
+          } catch (err) {
+            console.error("Payment sync error:", err);
+          }
+        } else {
+          alert(`결제 실패: ${rsp.error_msg}`);
+        }
+      },
+    );
+  };
+
   return (
     <div className="grid grid-cols-4 gap-4">
       {planData.map((plan) => (
-        <Plan key={plan.name} plan={plan} />
+        <Plan key={plan.name} plan={plan} onSelect={handleRequestPay} />
       ))}
     </div>
   );

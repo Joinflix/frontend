@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Plans } from "./Plans";
 
 export const Step4SelectPlan = () => {
+  const [refreshKey, setRefreshKey] = useState(0);
   return (
     <div>
       <div className="w-full max-w-full mt-10 flex flex-col gap-y-5 items-center">
@@ -16,7 +18,7 @@ export const Step4SelectPlan = () => {
         </div>
 
         <div className="flex flex-row gap-x-3">
-          <Plans />
+          <Plans onSuccess={() => setRefreshKey((prev) => prev + 1)} />{" "}
         </div>
 
         {/*3. button */}
