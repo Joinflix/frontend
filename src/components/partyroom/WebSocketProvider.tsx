@@ -15,8 +15,14 @@ const WebSocketProvider = () => {
 
   useEffect(() => {
     if (!stompClient && accessToken) {
+      // 로컬 환경과 배포 환경 구분
+      const socketUrl =
+        window.location.hostname === "localhost"
+          ? "http://localhost:8080/ws-stomp"
+          : "/ws-stomp";
+
       const client = new Client({
-        webSocketFactory: () => new SockJS("http://localhost:8080/ws-stomp"),
+        webSocketFactory: () => new SockJS(socketUrl),
         connectHeaders: {
           Authorization: `${getBearerToken(accessToken ?? "")}`,
         },
