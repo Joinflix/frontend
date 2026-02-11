@@ -75,8 +75,6 @@ export const Plans = ({ onSuccess }: { onSuccess: () => void }) => {
     const { IMP } = window;
     IMP.init("imp10502566");
 
-    setLoading(true);
-
     window.IMP.request_pay(
       {
         pg: "html5_inicis",
