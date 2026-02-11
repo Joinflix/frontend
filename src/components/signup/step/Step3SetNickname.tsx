@@ -10,6 +10,8 @@ import { useRequestSignup } from "../../../api/queries/useRequestSignup";
 import { Spinner } from "../../ui/spinner";
 import { useRequestNicknameCheck } from "../../../api/queries/useRequestNicknameCheck";
 import { useEffect, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import apiClient from "../../../api/axios";
 
 const ICON_CLASSNAME = "size-5 stroke-[#816BFF]";
 
@@ -70,10 +72,24 @@ const Step3SetNickname = () => {
     password,
     nickname,
     onSuccess: () => {
-      alert("성공적으로 가입을 완료하였습니다.");
-      navigate("/signup/step4-list-membership", { replace: true });
+      mutateAsyncSignin().then(() => {
+        alert("성공적으로 가입을 완료하였습니다.");
+        navigate("/signup/step4-list-membership", { replace: true });
+      });
     },
   });
+
+  const { mutateAsync: mutateAsyncSignin, isPending: isPendingSignin } =
+    useMutation({
+      mutationKey: ["signin"],
+      mutationFn: async () => {
+        const res = await apiClient.post("/auth/login", {
+          email,
+          password,
+        });
+        return res.data;
+      },
+    });
 
   const canSubmit = isValid && isValidNickname === true && !isCheckingNickname;
 

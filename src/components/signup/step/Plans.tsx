@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Plan from "./Plan";
+import { useAuthStore } from "../../../store/useAuthStore";
 
 declare global {
   interface Window {
@@ -9,44 +10,37 @@ declare global {
 
 const planData = [
   {
-    name: "무료 체험",
-    gradient: "from-gray-400 to-gray-700",
-    description: "기본적인 서비스 탐색이 가능한 무료 플랜입니다.",
-    features: [
-      { title: "월 요금", description: "0원" },
-      { title: "해상도", description: "480p" },
-      { title: "동시 시청", description: "1명" },
-    ],
-  },
-  {
-    name: "광고형 스탠다드",
+    membershipId: 1,
+    planName: "광고형 스탠다드",
+    amount: 100,
     gradient: "from-indigo-300 to-[#5e42c8]",
     description:
       "광고와 함께 즐기는 합리적인 가격의 플랜입니다. 일부 콘텐츠 제외.",
     features: [
-      { title: "월 요금", description: "5,500원" },
       { title: "해상도", description: "1080p" },
       { title: "동시 시청", description: "2명" },
     ],
   },
   {
-    name: "스탠다드",
+    membershipId: 2,
+    planName: "스탠다드",
+    amount: 200,
     gradient: "from-[#816BFF] to-purple-900",
     description:
       "무광고로 즐기는 표준 플랜입니다. 두 대의 기기에서 동시 시청 가능.",
     features: [
-      { title: "월 요금", description: "13,500원" },
       { title: "해상도", description: "1080p" },
       { title: "동시 시청", description: "2명" },
     ],
   },
   {
-    name: "프리미엄",
+    membershipId: 3,
+    planName: "프리미엄",
+    amount: 300,
     gradient: "from-[#816BFF] via-pink-500 to-yellow-400",
     description:
       "최고의 화질과 공간 음향을 제공합니다. 최대 4대 기기 동시 시청.",
     features: [
-      { title: "월 요금", description: "17,000원" },
       { title: "해상도", description: "4K + HDR" },
       { title: "동시 시청", description: "4명" },
     ],
@@ -54,8 +48,20 @@ const planData = [
 ];
 
 export const Plans = ({ onSuccess }: { onSuccess: () => void }) => {
+  const token = useAuthStore((state) => state.accessToken);
+  const email = useAuthStore((state) => state.user?.email);
+
+  const [loading, setLoading] = useState(false);
+
+  // 포트원 스크립트 로딩
   useEffect(() => {
-    if (window.IMP) window.IMP.init("imp10502566");
+    const script = document.createElement("script");
+    script.src = "https://cdn.iamport.kr/js/iamport.payment-1.2.0.js";
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
   }, []);
 
   const handleRequestPay = (
@@ -63,8 +69,15 @@ export const Plans = ({ onSuccess }: { onSuccess: () => void }) => {
     amount: number,
     planName: string,
   ) => {
-    const token = localStorage.getItem("token"); // Assuming token is in localStorage
-    if (!token) return alert("로그인이 필요합니다.");
+    if (!window.IMP) {
+      alert("결제 모듈 로딩 실패");
+      return;
+    }
+
+    const { IMP } = window;
+    IMP.init("imp10502566");
+
+    setLoading(true);
 
     window.IMP.request_pay(
       {
@@ -73,7 +86,7 @@ export const Plans = ({ onSuccess }: { onSuccess: () => void }) => {
         merchant_uid: `ORD-${membershipId}-${Date.now()}`,
         name: `JoinFlex ${planName}`,
         amount: amount,
-        buyer_email: "test@test.com",
+        buyer_email: `${email}`,
       },
       async (rsp: any) => {
         if (rsp.success) {
