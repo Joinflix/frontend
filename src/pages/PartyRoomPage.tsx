@@ -4,13 +4,13 @@ import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router";
 import { useWebSocketStore } from "../store/useWebSocketStore";
 import { useAuthStore } from "../store/useAuthStore";
-import apiClient from "../api/axios";
 
 const chevronStyle = "stroke-zinc-600 stroke-5";
 interface ChatMessage {
   messageType: "TALK" | "ENTER" | "LEAVE" | "SYSTEM";
   sender: string;
   message: string;
+  currentCount?: number;
 }
 
 const PartyRoomPage = () => {
@@ -23,6 +23,7 @@ const PartyRoomPage = () => {
   const stompClient = useWebSocketStore((state) => state.stompClient);
 
   const [partyData, setPartyData] = useState(location.state?.partyData);
+  const [liveCount, setLiveCount] = useState<number | null>(null);
 
   const accessToken = useAuthStore((state) => state.accessToken);
   const isConnected = useWebSocketStore((state) => state.isConnected);
@@ -38,12 +39,6 @@ const PartyRoomPage = () => {
 
   const chatWidth = 336;
   const handleWidth = 32;
-
-  useEffect(() => {
-    if (!partyData && partyId) {
-      apiClient.get(`/party/${partyId}`).then((res) => setPartyData(res.data));
-    }
-  }, [partyData, partyId]);
 
   const handleClickOut = () => {
     if (stompClient?.connected) {
@@ -66,6 +61,9 @@ const PartyRoomPage = () => {
       `/sub/party/${partyId}`,
       (message) => {
         const newMessage = JSON.parse(message.body);
+        if (newMessage.currentCount !== undefined) {
+          setLiveCount(newMessage.currentCount);
+        }
         setMessages((prev) => [...prev, newMessage]);
       },
     );
@@ -95,7 +93,7 @@ const PartyRoomPage = () => {
         });
       }
     };
-  }, [stompClient, isConnected, partyId, accessToken]);
+  }, [stompClient, isConnected, partyId]);
 
   const sendChat = (text: string) => {
     if (stompClient?.connected) {
@@ -185,6 +183,8 @@ const PartyRoomPage = () => {
     return () => sub.unsubscribe();
   }, [stompClient, partyId, isHostControl, isHost, isConnected]);
 
+  const displayCount = liveCount ?? partyData?.currentMemberCount ?? 0;
+
   return (
     <div className="flex h-screen relative">
       {/* Video */}
@@ -216,6 +216,7 @@ const PartyRoomPage = () => {
           messages={messages}
           onSendMessage={sendChat}
           partyData={partyData}
+          currentCount={displayCount}
         />
       </div>
 

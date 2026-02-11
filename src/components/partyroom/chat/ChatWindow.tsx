@@ -4,6 +4,7 @@ interface ChatMessage {
   messageType: "TALK" | "ENTER" | "LEAVE" | "SYSTEM";
   sender: string;
   message: string;
+  currentCount?: number;
 }
 interface ChatWindowProps {
   messages: ChatMessage[];
@@ -21,6 +22,7 @@ const ChatWindow = ({
   messages,
   onSendMessage,
   partyData,
+  currentCount,
 }: ChatWindowProps) => {
   const [message, setMessage] = useState("");
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -61,7 +63,7 @@ const ChatWindow = ({
           {/* 참여 인원 */}
           <div className="flex flex-row text-white/70 items-center justify-center gap-1">
             <User className="stroke-white/40 size-4" />
-            {partyData?.currentMemberCount}
+            {currentCount}
           </div>
           {/* 채팅 관리 버튼 */}
           <div className="flex flex-row gap-5 justify-center px-5 py-3 text-[#816BFF] tracking-tight ">
