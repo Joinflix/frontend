@@ -80,7 +80,7 @@ export const Plans = ({ onSuccess }: { onSuccess: () => void }) => {
         pg: "html5_inicis",
         pay_method: "card",
         merchant_uid: `ORD-${membershipId}-${Date.now()}`,
-        name: `JoinFlex ${planName}`,
+        name: `Joinflix ${planName}`,
         amount: amount,
         buyer_email: `${email}`,
       },
