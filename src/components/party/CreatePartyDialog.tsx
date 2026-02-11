@@ -179,10 +179,11 @@ const CreatePartyDialog = ({
   };
 
   const isWorking =
-    createPartyIsPending ||
-    joinPartyIsPending ||
-    createPartyIsSuccess ||
-    joinPartyIsSuccess;
+    (createPartyIsPending ||
+      joinPartyIsPending ||
+      createPartyIsSuccess ||
+      joinPartyIsSuccess) &&
+    partyType === "PRIVATE";
 
   return (
     <Dialog
