@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Plan from "./Plan";
 import { useAuthStore } from "../../../store/useAuthStore";
 import apiClient from "../../../api/axios";
@@ -49,10 +49,7 @@ const planData = [
 ];
 
 export const Plans = ({ onSuccess }: { onSuccess: () => void }) => {
-  const token = useAuthStore((state) => state.accessToken);
   const email = useAuthStore((state) => state.user?.email);
-
-  const [loading, setLoading] = useState(false);
 
   // 포트원 스크립트 로딩
   useEffect(() => {
