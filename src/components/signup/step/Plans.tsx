@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Plan from "./Plan";
 import { useAuthStore } from "../../../store/useAuthStore";
+import apiClient from "../../../api/axios";
 
 declare global {
   interface Window {
@@ -91,12 +92,7 @@ export const Plans = ({ onSuccess }: { onSuccess: () => void }) => {
       async (rsp: any) => {
         if (rsp.success) {
           try {
-            const response = await fetch("/api/payments/complete", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
+            const response = await apiClient.post("/payments/complete", {
               body: JSON.stringify({
                 imp_uid: rsp.imp_uid,
                 merchant_uid: rsp.merchant_uid,
