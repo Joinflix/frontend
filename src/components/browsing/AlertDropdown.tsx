@@ -9,11 +9,32 @@ import {
   useNotificationStore,
   useUnreadNotificationCount,
 } from "../../store/useNotificationStore";
+import { useNavigate } from "react-router";
+import { useMutation } from "@tanstack/react-query";
+import apiClient from "../../api/axios";
 
 interface AlertDropdownProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   iconStyle: string;
+}
+
+type NotificationType =
+  | "FRIEND_REQUEST"
+  | "FRIEND_ACCEPT"
+  | "EVENT_REJECT"
+  | "EVENT_DELETE"
+  | "EVENT_CANCEL"
+  | "PARTY_INVITE";
+
+interface Notification {
+  id: number;
+  message: string;
+  createdAt: string;
+  notificationType: NotificationType;
+  senderId: number;
+  receiverId: number;
+  eventId: number;
 }
 
 export const AlertDropdown = ({
@@ -23,12 +44,34 @@ export const AlertDropdown = ({
 }: AlertDropdownProps) => {
   const alarmCount = useUnreadNotificationCount();
   const notifications = useNotificationStore((state) => state.notifications);
+  const removeNotification = useNotificationStore(
+    (state) => state.removeNotification,
+  );
   const allNotifications = Object.values(notifications)
     .flat()
     .sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
+
+  const navigate = useNavigate();
+
+  const handleClickNotification = (noti: Notification) => {
+    if (noti.notificationType === "PARTY_INVITE" && noti.eventId) {
+      removeNotification(noti.notificationType, noti.id);
+      mutateAsync(noti.id);
+      navigate(`/watch/party/${noti.eventId}`);
+    }
+  };
+
+  const { mutateAsync } = useMutation({
+    mutationFn: async (notificationId: number) => {
+      const res = await apiClient.post("/notifications/last-read-at", {
+        notificationId,
+      });
+      return res.data;
+    },
+  });
 
   return (
     <div className="relative">
@@ -57,6 +100,7 @@ export const AlertDropdown = ({
               <DropdownMenuItem
                 key={noti.id}
                 className="flex flex-col items-start gap-1 p-3 cursor-pointer hover:bg-white/10 transition-colors border-b border-white/5 last:border-0"
+                onClick={() => handleClickNotification(noti)}
               >
                 <span className="text-xs">{noti.message}</span>
                 <span className="text-[10px]">

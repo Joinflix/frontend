@@ -4,6 +4,8 @@ import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router";
 import { useWebSocketStore } from "../store/useWebSocketStore";
 import { useAuthStore } from "../store/useAuthStore";
+import { useQuery } from "@tanstack/react-query";
+import apiClient from "../api/axios";
 
 const chevronStyle = "stroke-zinc-600 stroke-5";
 interface ChatMessage {
@@ -21,17 +23,34 @@ const PartyRoomPage = () => {
   const [isChatMinimized, setIsChatMinimized] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const stompClient = useWebSocketStore((state) => state.stompClient);
-
-  const [partyData, setPartyData] = useState(location.state?.partyData);
   const [liveCount, setLiveCount] = useState<number | null>(null);
 
   const accessToken = useAuthStore((state) => state.accessToken);
   const isConnected = useWebSocketStore((state) => state.isConnected);
 
-  const [isHostControl, setIsHostControl] = useState(true); // host-controlled by default
-  const isHost =
-    partyData?.hostId === useAuthStore((state) => state.user?.userId);
+  const { data: queryPartyData, isPending: isPendingQueryPartyData } = useQuery(
+    {
+      queryKey: ["queryPartyData", partyId],
+      queryFn: async () => {
+        const res = await apiClient.get(`/parties/${partyId}`);
+        return res.data;
+      },
+      enabled: !!partyId && !location.state?.partyData,
+    },
+  );
+  const finalPartyData = location.state?.partyData || queryPartyData;
+
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  const isHost =
+    finalPartyData?.hostId === useAuthStore((state) => state.user?.userId);
+  const [isHostControl, setIsHostControl] = useState(true); // host-controlled by default
+  useEffect(() => {
+    if (finalPartyData) {
+      setIsHostControl(finalPartyData.hostControl);
+    }
+  }, [finalPartyData]);
+
   const [videoState, setVideoState] = useState({
     currentTime: 0,
     paused: true,
@@ -183,7 +202,31 @@ const PartyRoomPage = () => {
     return () => sub.unsubscribe();
   }, [stompClient, partyId, isHostControl, isHost, isConnected]);
 
-  const displayCount = liveCount ?? partyData?.currentMemberCount ?? 0;
+  const displayCount = liveCount ?? finalPartyData?.currentMemberCount ?? 0;
+
+  // Place this right before your main return
+  if (isPendingQueryPartyData && !finalPartyData) {
+    return (
+      <div className="h-screen w-full bg-black flex flex-col items-center justify-center text-white gap-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#816BFF]"></div>
+        <p className="animate-pulse text-zinc-400">
+          파티룸 정보를 가져오는 중...
+        </p>
+      </div>
+    );
+  }
+
+  // Second safety guard: if data fails to load or doesn't exist
+  if (!finalPartyData) {
+    return (
+      <div className="h-screen w-full bg-black flex items-center justify-center text-white">
+        <p>파티를 찾을 수 없습니다.</p>
+        <button onClick={() => navigate(-1)} className="ml-4 underline">
+          돌아가기
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen relative">
@@ -196,7 +239,9 @@ const PartyRoomPage = () => {
               className="cursor-pointer top-4 left-4 z-10 hover:scale-120 transition-transform stroke-3"
               onClick={handleClickOut}
             />
-            <span className="pointer-events-none">{partyData.movieTitle}</span>
+            <span className="pointer-events-none">
+              {finalPartyData.movieTitle}
+            </span>
           </div>
         </div>
         <video
@@ -215,7 +260,7 @@ const PartyRoomPage = () => {
         <ChatWindow
           messages={messages}
           onSendMessage={sendChat}
-          partyData={partyData}
+          partyData={finalPartyData}
           currentCount={displayCount}
         />
       </div>

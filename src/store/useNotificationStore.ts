@@ -6,6 +6,7 @@ interface NotificationStore {
   notifications: Record<NotificationType, Notification[]>;
   setNotifications: (data: Record<NotificationType, Notification[]>) => void;
   addNotifications: (data: Record<NotificationType, Notification[]>) => void;
+  removeNotification: (type: NotificationType, id: number) => void;
 }
 
 const initialNotifications: Record<NotificationType, Notification[]> = {
@@ -42,6 +43,13 @@ export const useNotificationStore = create<NotificationStore>()(
 
           return { notifications: updated };
         }),
+      removeNotification: (type, id) =>
+        set((state) => ({
+          notifications: {
+            ...state.notifications,
+            [type]: state.notifications[type]?.filter((n) => n.id !== id) || [],
+          },
+        })),
     }),
     { name: "NotificationStore" },
   ),
