@@ -85,27 +85,26 @@ export const Plans = ({ onSuccess }: { onSuccess: () => void }) => {
         buyer_email: `${email}`,
       },
       async (rsp: any) => {
-        if (rsp.success) {
-          try {
-            const response = await apiClient.post("/payments/complete", {
-              body: JSON.stringify({
-                imp_uid: rsp.imp_uid,
-                merchant_uid: rsp.merchant_uid,
-                paid_amount: rsp.paid_amount,
-                membershipId: membershipId,
-                pay_method: rsp.pay_method,
-                status: "paid",
-              }),
-            });
-            if (response.ok) {
-              alert("결제 완료!");
-              onSuccess(); // Refresh history
-            }
-          } catch (err) {
-            console.error("Payment sync error:", err);
-          }
-        } else {
+        if (!rsp.success) {
           alert(`결제 실패: ${rsp.error_msg}`);
+          return;
+        }
+
+        try {
+          await apiClient.post("/payments/complete", {
+            imp_uid: rsp.imp_uid,
+            merchant_uid: rsp.merchant_uid,
+            paid_amount: rsp.paid_amount,
+            membershipId,
+            pay_method: rsp.pay_method,
+            status: "paid",
+          });
+
+          alert("결제 완료!");
+          onSuccess();
+        } catch (err) {
+          console.error("Payment sync error:", err);
+          alert("서버 결제 검증 실패");
         }
       },
     );
