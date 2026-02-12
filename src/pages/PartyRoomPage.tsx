@@ -24,6 +24,7 @@ const PartyRoomPage = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const stompClient = useWebSocketStore((state) => state.stompClient);
   const [liveCount, setLiveCount] = useState<number | null>(null);
+  const [isPartyClosed, setIsPartyClosed] = useState(false);
 
   const accessToken = useAuthStore((state) => state.accessToken);
   const isConnected = useWebSocketStore((state) => state.isConnected);
@@ -82,6 +83,13 @@ const PartyRoomPage = () => {
         const newMessage = JSON.parse(message.body);
         if (newMessage.currentCount !== undefined) {
           setLiveCount(newMessage.currentCount);
+
+          if (
+            newMessage.messageType === "LEAVE" &&
+            newMessage.currentCount === 0
+          ) {
+            setIsPartyClosed(true);
+          }
         }
         setMessages((prev) => [...prev, newMessage]);
       },
@@ -281,6 +289,23 @@ const PartyRoomPage = () => {
           <ChevronRight className={chevronStyle} />
         )}
       </div>
+      {/* Party Closed Overlay */}
+      {isPartyClosed && (
+        <div className="absolute inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md">
+          <div className="text-center p-8 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl">
+            <h2 className="text-2xl font-bold text-white mb-2">
+              방장이 파티를 종료했습니다.
+            </h2>
+            <p className="text-zinc-400 mb-6">the host has closed this party</p>
+            <button
+              onClick={() => navigate("/party", { replace: true })}
+              className="px-6 py-2 bg-[#816BFF] text-white rounded-lg font-medium hover:bg-[#6c56e0] transition-colors cursor-pointer"
+            >
+              목록으로 돌아가기
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
