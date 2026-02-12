@@ -1,4 +1,4 @@
-import { Bell } from "lucide-react";
+import { Bell, UserRoundPlus, UserRoundX } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,12 +12,13 @@ import {
 import { useNavigate } from "react-router";
 import { useMutation } from "@tanstack/react-query";
 import apiClient from "../../api/axios";
+import { ActionButton } from "../friend/ActionButton";
+import { useFriendActions } from "../../api/queries/useFriendActions";
 
 interface AlertDropdownProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   iconStyle: string;
-  onOpenFriendSearch: () => void;
 }
 
 type NotificationType =
@@ -38,12 +39,22 @@ interface Notification {
   eventId: number;
 }
 
+const BASE_STYLE =
+  "flex items-center px-2 py-1.5 rounded-sm text-[10px] font-bold transition-all duration-300 border backdrop-blur-md active:scale-95 cursor-pointer z-50 hover:!text-white";
+
 export const AlertDropdown = ({
   isOpen,
   onOpenChange,
   iconStyle,
-  onOpenFriendSearch,
 }: AlertDropdownProps) => {
+  const { acceptFriend, refuseFriend } = useFriendActions();
+  const handleClickAcceptFriend = (requestId: number) => {
+    acceptFriend(requestId);
+  };
+  const handleClickRefuseFriend = (requestId: number) => {
+    refuseFriend(requestId);
+  };
+
   const alarmCount = useUnreadNotificationCount();
   const notifications = useNotificationStore((state) => state.notifications);
   const removeNotification = useNotificationStore(
@@ -66,7 +77,6 @@ export const AlertDropdown = ({
     }
 
     if (noti.notificationType === "FRIEND_REQUEST") {
-      onOpenFriendSearch();
       removeNotification(noti.notificationType, noti.id);
     }
   };
@@ -109,7 +119,29 @@ export const AlertDropdown = ({
                 className="flex flex-col items-start gap-1 p-3 cursor-pointer hover:bg-white/10 transition-colors border-b border-white/5 last:border-0"
                 onClick={() => handleClickNotification(noti)}
               >
-                <span className="text-xs">{noti.message}</span>
+                <div className="flex gap-4">
+                  <span className="text-xs">{noti.message}</span>
+                  {noti.notificationType === "FRIEND_REQUEST" && (
+                    <div className="flex gap-2">
+                      {/* 수락 */}
+                      <ActionButton
+                        label="수락"
+                        icon={UserRoundPlus}
+                        iconSize={12}
+                        variantClassName={`${BASE_STYLE} bg-emerald-500/20 border-emerald-500/30 text-emerald-500 hover:bg-emerald-600 transition-colors`}
+                        onClick={() => handleClickAcceptFriend(noti.id)}
+                      />
+                      {/* 거절 */}
+                      <ActionButton
+                        label="거절"
+                        icon={UserRoundX}
+                        iconSize={12}
+                        variantClassName={`${BASE_STYLE}  bg-rose-500/20 border-rose-500/30 text-rose-500 hover:bg-rose-600 transition-colors`}
+                        onClick={() => handleClickRefuseFriend(noti.id)}
+                      />
+                    </div>
+                  )}
+                </div>
                 <span className="text-[10px]">
                   {new Date(noti.createdAt).toLocaleTimeString([], {
                     hour: "2-digit",

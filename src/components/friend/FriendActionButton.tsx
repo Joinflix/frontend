@@ -1,4 +1,5 @@
 import { Clock, UserRoundMinus, UserRoundPlus, UserRoundX } from "lucide-react";
+import { ActionButton } from "./ActionButton";
 
 interface Props {
   status: "FRIEND" | "SENT_PENDING" | "RECEIVED_PENDING" | "NONE";
@@ -44,20 +45,21 @@ const FriendActionButton = ({
     return (
       <div className="flex gap-2">
         {/* Accept Button */}
-        <button
+        <ActionButton
+          label="수락"
+          icon={UserRoundPlus}
+          iconSize={14}
+          variantClassName={`${BASE_STYLE} bg-emerald-500/20 border-emerald-500/30 text-emerald-500 hover:bg-emerald-600 hover:text-white transition-colors`}
           onClick={onAccept}
-          className={`${BASE_STYLE} bg-emerald-500/20 border-emerald-500/30 text-emerald-500 hover:bg-emerald-600 hover:text-white transition-colors`}
-        >
-          <UserRoundPlus size={14} /> <span>수락</span>
-        </button>
-
+        />
         {/* Refuse Button */}
-        <button
-          onClick={onRefuse} // Ensure you pass this prop down
-          className={`${BASE_STYLE} bg-rose-500/20 border-rose-500/30 text-rose-500 hover:bg-rose-600 hover:text-white transition-colors`}
-        >
-          <UserRoundX size={14} /> <span>거절</span>
-        </button>
+        <ActionButton
+          label="거절"
+          icon={UserRoundX}
+          iconSize={14}
+          variantClassName={`${BASE_STYLE}  bg-rose-500/20 border-rose-500/30 text-rose-500 hover:bg-rose-600 hover:text-white transition-colors`}
+          onClick={onRefuse}
+        />
       </div>
     );
   }
