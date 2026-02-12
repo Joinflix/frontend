@@ -17,6 +17,7 @@ interface AlertDropdownProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   iconStyle: string;
+  onOpenFriendSearch: () => void;
 }
 
 type NotificationType =
@@ -41,6 +42,7 @@ export const AlertDropdown = ({
   isOpen,
   onOpenChange,
   iconStyle,
+  onOpenFriendSearch,
 }: AlertDropdownProps) => {
   const alarmCount = useUnreadNotificationCount();
   const notifications = useNotificationStore((state) => state.notifications);
@@ -61,6 +63,11 @@ export const AlertDropdown = ({
       removeNotification(noti.notificationType, noti.id);
       mutateAsync(noti.id);
       navigate(`/watch/party/${noti.eventId}`);
+    }
+
+    if (noti.notificationType === "FRIEND_REQUEST") {
+      onOpenFriendSearch();
+      removeNotification(noti.notificationType, noti.id);
     }
   };
 

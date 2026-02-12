@@ -139,6 +139,7 @@ const BrowsingHeader = () => {
           isOpen={isAlertOpen}
           onOpenChange={setIsAlertOpen}
           iconStyle={ICON_STYLE}
+          onOpenFriendSearch={() => setIsFriendSearchOpen(true)}
         />
 
         <div
