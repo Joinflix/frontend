@@ -8,7 +8,7 @@ import {
 } from "../ui/dialog";
 import UserList from "./UserList";
 import { useAuthStore } from "../../store/useAuthStore";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 
 interface FriendSearchDialogProps {
   isOpen: boolean;
@@ -26,6 +26,13 @@ interface FriendSearchDialogProps {
   fetchNextPage?: () => void;
   isFetchingNextPage?: boolean;
 }
+
+const STATUS_PRIORITY: Record<string, number> = {
+  RECEIVED_PENDING: 1,
+  SENT_PENDING: 2,
+  FRIEND: 3,
+  NONE: 4,
+};
 
 const FriendSearchDialog = ({
   isOpen,
@@ -56,6 +63,32 @@ const FriendSearchDialog = ({
       fetchNextPage?.();
     }
   };
+
+  const sortedUsers = useMemo(() => {
+    if (!users) return [];
+
+    return [...users]
+      .filter((user) => user.id !== userId)
+      .sort((a, b) => {
+        // 1. Sort by Status Priority
+        // Fallback to 5 if a status somehow doesn't match the type
+        const priorityA =
+          STATUS_PRIORITY[a.friendStatus as keyof typeof STATUS_PRIORITY] ?? 5;
+        const priorityB =
+          STATUS_PRIORITY[b.friendStatus as keyof typeof STATUS_PRIORITY] ?? 5;
+
+        if (priorityA !== priorityB) {
+          return priorityA - priorityB;
+        }
+
+        // 2. Secondary Sort: Alphabetical Nickname (Ascending)
+        // Note: Using 'nickName' (Capital N) to match your JSON structure
+        const nameA = a.nickName ?? "";
+        const nameB = b.nickName ?? "";
+
+        return nameA.localeCompare(nameB, "ko");
+      });
+  }, [users, userId]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -103,7 +136,7 @@ const FriendSearchDialog = ({
             </div>
           ) : users?.length > 0 ? (
             <>
-              {users
+              {sortedUsers
                 .filter((user) => user.id !== userId)
                 .map((user) => (
                   <UserList
