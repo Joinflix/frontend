@@ -308,7 +308,7 @@ const PartyRoomPage = () => {
         </div>
         <video
           ref={videoRef}
-          src="/videos/steamboat-willie_1928.mp4"
+          src="https://joinflix-s3-bucket.s3.ap-northeast-2.amazonaws.com/videos/steamboat-willie_1928.mp4"
           className="object-contain w-full h-full max-h-screen max-w-screen"
           controls={!isHostControl || isHost}
         />
