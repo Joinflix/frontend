@@ -14,6 +14,11 @@ interface ChatMessage {
   message: string;
   currentCount?: number;
 }
+interface VideoState {
+  currentTime: number;
+  paused: boolean;
+  action: "PLAY" | "PAUSE" | "SEEK";
+}
 
 const PartyRoomPage = () => {
   const navigate = useNavigate();
@@ -24,9 +29,19 @@ const PartyRoomPage = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const stompClient = useWebSocketStore((state) => state.stompClient);
   const [liveCount, setLiveCount] = useState<number | null>(null);
+  const [isPartyClosed, setIsPartyClosed] = useState(false);
+
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [isDelegating, setIsDelegating] = useState(false);
+  const [memberList, setMemberList] = useState<
+    { userId: string; nickname: string }[]
+  >([]);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
+  const hasLeftManually = useRef(false);
 
   const accessToken = useAuthStore((state) => state.accessToken);
   const isConnected = useWebSocketStore((state) => state.isConnected);
+  const user = useAuthStore((state) => state.user);
 
   const { data: queryPartyData, isPending: isPendingQueryPartyData } = useQuery(
     {
@@ -41,15 +56,27 @@ const PartyRoomPage = () => {
   const finalPartyData = location.state?.partyData || queryPartyData;
 
   const videoRef = useRef<HTMLVideoElement>(null);
+  const isProcessingSync = useRef(false);
 
   const isHost =
-    finalPartyData?.hostId === useAuthStore((state) => state.user?.userId);
-  const [isHostControl, setIsHostControl] = useState(true); // host-controlled by default
+    finalPartyData && user
+      ? String(finalPartyData.hostNickname) === String(user.nickName)
+      : false;
+  const isHostRef = useRef(isHost);
+
+  const [isHostControl, setIsHostControl] = useState(true);
+
+  useEffect(() => {
+    isHostRef.current = isHost;
+  }, [isHost]);
+
   useEffect(() => {
     if (finalPartyData) {
-      setIsHostControl(finalPartyData.hostControl);
+      console.log("Party Data Loaded. Host ID:", finalPartyData.hostId);
+      console.log("Current User ID:", user?.userId);
+      console.log("Is Host?:", isHost);
     }
-  }, [finalPartyData]);
+  }, [finalPartyData, user, isHost]);
 
   const [videoState, setVideoState] = useState({
     currentTime: 0,
@@ -59,35 +86,41 @@ const PartyRoomPage = () => {
   const chatWidth = 336;
   const handleWidth = 32;
 
-  const handleClickOut = () => {
-    if (stompClient?.connected) {
-      stompClient.publish({
-        destination: `/pub/party/${partyId}/leave`,
-        headers: {
-          Authorization: accessToken?.startsWith("Bearer ")
-            ? accessToken
-            : `Bearer ${accessToken}`,
-        },
-      });
-    }
-    navigate(-1);
-  };
-
   useEffect(() => {
     if (!stompClient || !isConnected || !partyId) return;
 
-    const subscription = stompClient.subscribe(
+    // Subscribe to Chat/Events
+    const partySub = stompClient.subscribe(
       `/sub/party/${partyId}`,
       (message) => {
         const newMessage = JSON.parse(message.body);
-        if (newMessage.currentCount !== undefined) {
+        if (newMessage.currentCount !== undefined)
           setLiveCount(newMessage.currentCount);
-        }
         setMessages((prev) => [...prev, newMessage]);
       },
     );
 
-    // Send ENTER after subscribing
+    // Subscribe to Video Sync
+    const videoSub = stompClient.subscribe(
+      `/sub/party/${partyId}/video`,
+      (msg) => {
+        const { currentTime, paused, action } = JSON.parse(msg.body);
+        const video = videoRef.current;
+        if (!video || isHostRef.current) return;
+        isProcessingSync.current = true; // Lock local events
+        if (action === "SEEK") {
+          video.currentTime = currentTime;
+        } else {
+          video.currentTime = currentTime;
+          if (paused) video.pause();
+          else video.play().catch(() => {});
+        }
+        setTimeout(() => {
+          isProcessingSync.current = false;
+        }, 200);
+      },
+    );
+
     stompClient.publish({
       destination: `/pub/party/${partyId}/enter`,
       headers: {
@@ -98,21 +131,62 @@ const PartyRoomPage = () => {
     });
 
     return () => {
-      subscription.unsubscribe();
+      partySub.unsubscribe();
+      videoSub.unsubscribe();
+    };
+  }, [stompClient, isConnected, partyId]); // REMOVED isHost and isHostControl from here
 
-      // send LEAVE on unmount
-      if (stompClient?.connected) {
-        stompClient.publish({
-          destination: `/pub/party/${partyId}/leave`,
-          headers: {
-            Authorization: accessToken?.startsWith("Bearer ")
-              ? accessToken
-              : `Bearer ${accessToken}`,
-          },
-        });
+  const handleClickOut = () => {
+    if (isHost) {
+      setShowLeaveDialog(true);
+    } else {
+      performLeave();
+    }
+  };
+
+  const performLeave = (newHostId?: string) => {
+    hasLeftManually.current = true;
+    if (stompClient?.connected) {
+      stompClient.publish({
+        destination: `/pub/party/${partyId}/leave`,
+        body: JSON.stringify({ nextHostId: newHostId }), // Send delegation if exists
+        headers: { Authorization: accessToken },
+      });
+    }
+    navigate(-1);
+  };
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isHost) {
+        e.preventDefault();
+        e.returnValue = "";
       }
     };
-  }, [stompClient, isConnected, partyId]);
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isHost]);
+
+  const handleFetchMembers = async () => {
+    setIsLoadingMembers(true);
+    try {
+      const res = await apiClient.get(`/parties/${partyId}/members`);
+      const currentUserId = useAuthStore.getState().user?.userId;
+      const others = res.data.filter((m: any) => m.userId !== currentUserId);
+      if (others.length === 0) {
+        setMemberList([]);
+      } else {
+        setMemberList(others);
+      }
+      setIsDelegating(true);
+    } catch (error) {
+      console.error("Failed to load members", error);
+      alert("멤버 목록을 불러오지 못했습니다.");
+    } finally {
+      setIsLoadingMembers(false);
+    }
+  };
 
   const sendChat = (text: string) => {
     if (stompClient?.connected) {
@@ -128,16 +202,22 @@ const PartyRoomPage = () => {
     }
   };
 
-  const handleVideoEvent = () => {
-    if (!videoRef.current) return;
+  const handleVideoEvent = (action: "PLAY" | "PAUSE" | "SEEK") => {
+    if (
+      !videoRef.current ||
+      isProcessingSync.current ||
+      !stompClient?.connected
+    )
+      return;
 
-    const state = {
+    const state: VideoState = {
       currentTime: videoRef.current.currentTime,
       paused: videoRef.current.paused,
+      action: action,
     };
 
     // Only send if allowed
-    if (isHostControl && isHost) {
+    if (!isHostControl || isHost) {
       stompClient?.publish({
         destination: `/pub/party/${partyId}/video`,
         body: JSON.stringify(state),
@@ -165,42 +245,24 @@ const PartyRoomPage = () => {
     const video = videoRef.current;
     if (!video) return;
 
-    video.addEventListener("play", handleVideoEvent);
-    video.addEventListener("pause", handleVideoEvent);
-    video.addEventListener("seeked", handleVideoEvent);
+    const onPlay = () => handleVideoEvent("PLAY");
+    const onPause = () => {
+      if (!video.seeking) {
+        handleVideoEvent("PAUSE");
+      }
+    };
+    const onSeek = () => handleVideoEvent("SEEK");
+
+    video.addEventListener("play", onPlay);
+    video.addEventListener("pause", onPause);
+    video.addEventListener("seeked", onSeek);
 
     return () => {
-      video.removeEventListener("play", handleVideoEvent);
-      video.removeEventListener("pause", handleVideoEvent);
-      video.removeEventListener("seeked", handleVideoEvent);
+      video.removeEventListener("play", onPlay);
+      video.removeEventListener("pause", onPause);
+      video.removeEventListener("seeked", onSeek);
     };
-  }, [isHostControl, isHost]);
-
-  useEffect(() => {
-    if (!stompClient || !isConnected || !partyId) return;
-
-    const sub = stompClient.subscribe(`/sub/party/${partyId}/video`, (msg) => {
-      const { currentTime, paused } = JSON.parse(msg.body);
-
-      if (isHostControl && !isHost) {
-        // Only sync if not host in host-controlled mode
-        if (videoRef.current) {
-          videoRef.current.currentTime = currentTime;
-          if (paused) videoRef.current.pause();
-          else videoRef.current.play();
-        }
-      } else if (!isHostControl) {
-        // Everyone sync
-        if (videoRef.current) {
-          videoRef.current.currentTime = currentTime;
-          if (paused) videoRef.current.pause();
-          else videoRef.current.play();
-        }
-      }
-    });
-
-    return () => sub.unsubscribe();
-  }, [stompClient, partyId, isHostControl, isHost, isConnected]);
+  }, [isHostControl, isHost, stompClient]);
 
   const displayCount = liveCount ?? finalPartyData?.currentMemberCount ?? 0;
 
@@ -246,9 +308,9 @@ const PartyRoomPage = () => {
         </div>
         <video
           ref={videoRef}
-          src="/public/videos/steamboat-willie_1928.mp4"
+          src="/videos/steamboat-willie_1928.mp4"
           className="object-contain w-full h-full max-h-screen max-w-screen"
-          controls={!isHostControl || isHost} // host-only controls if hostControl mode
+          controls={!isHostControl || isHost}
         />
       </div>
 
@@ -281,6 +343,97 @@ const PartyRoomPage = () => {
           <ChevronRight className={chevronStyle} />
         )}
       </div>
+      {/* Party Closed Overlay */}
+      {isPartyClosed && (
+        <div className="absolute inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md">
+          <div className="text-center p-8 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl">
+            <h2 className="text-2xl font-bold text-white mb-2">
+              방장이 파티를 종료했습니다.
+            </h2>
+            <p className="text-zinc-400 mb-6">the host has closed this party</p>
+            <button
+              onClick={() => navigate("/party", { replace: true })}
+              className="px-6 py-2 bg-[#816BFF] text-white rounded-lg font-medium hover:bg-[#6c56e0] transition-colors cursor-pointer"
+            >
+              목록으로 돌아가기
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Leave Options Modal */}
+      {showLeaveDialog && (
+        <div className="absolute inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4">
+          <div className="bg-zinc-900 border border-zinc-800 w-full max-w-sm rounded-2xl p-6 shadow-2xl">
+            {!isDelegating ? (
+              <>
+                <h3 className="text-xl font-bold text-white mb-2">
+                  파티 나가기
+                </h3>
+                <p className="text-zinc-400 text-sm mb-6">
+                  방장 권한을 위임하거나 파티를 종료할 수 있습니다.
+                </p>
+
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={handleFetchMembers}
+                    disabled={isLoadingMembers}
+                    className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl transition-all font-medium disabled:opacity-50"
+                  >
+                    {isLoadingMembers ? "로딩 중..." : "권한 위임 후 나가기"}
+                  </button>
+                  <button
+                    onClick={() => performLeave()} // No ID passed = Backend closes party
+                    className="w-full py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl transition-all font-medium border border-red-500/10"
+                  >
+                    파티 종료 (모두 퇴장)
+                  </button>
+                  <button
+                    onClick={() => setShowLeaveDialog(false)}
+                    className="mt-2 py-2 text-zinc-500 hover:text-zinc-300 text-sm"
+                  >
+                    취소
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-bold text-white mb-4">
+                  새 방장 선택
+                </h3>
+                <div className="max-h-60 overflow-y-auto mb-6 flex flex-col gap-2 pr-1 custom-scrollbar">
+                  {memberList.length > 0 ? (
+                    memberList.map((member) => (
+                      <button
+                        key={member.userId}
+                        onClick={() => performLeave(member.userId)}
+                        className="w-full flex items-center gap-3 p-3 rounded-xl bg-zinc-800/50 hover:bg-[#816BFF]/20 border border-transparent hover:border-[#816BFF]/50 transition-all text-left group"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-zinc-700 group-hover:bg-[#816BFF] flex items-center justify-center text-xs text-white transition-colors">
+                          {member.nickname?.charAt(0)}
+                        </div>
+                        <span className="text-white font-medium">
+                          {member.nickname}
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <p className="text-zinc-500 text-center py-4 text-sm">
+                      위임할 수 있는 멤버가 없습니다.
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => setIsDelegating(false)}
+                  className="w-full py-2 text-zinc-400 hover:text-white transition-colors text-sm"
+                >
+                  뒤로 가기
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
