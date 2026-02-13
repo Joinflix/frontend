@@ -14,6 +14,11 @@ interface ChatMessage {
   message: string;
   currentCount?: number;
 }
+interface VideoState {
+  currentTime: number;
+  paused: boolean;
+  action: "PLAY" | "PAUSE" | "SEEK";
+}
 
 const PartyRoomPage = () => {
   const navigate = useNavigate();
@@ -99,14 +104,17 @@ const PartyRoomPage = () => {
     const videoSub = stompClient.subscribe(
       `/sub/party/${partyId}/video`,
       (msg) => {
-        const { currentTime, paused } = JSON.parse(msg.body);
+        const { currentTime, paused, action } = JSON.parse(msg.body);
         const video = videoRef.current;
         if (!video || isHostRef.current) return;
         isProcessingSync.current = true; // Lock local events
-        video.currentTime = currentTime;
-        if (paused) video.pause();
-        else video.play().catch(() => {});
-
+        if (action === "SEEK") {
+          video.currentTime = currentTime;
+        } else {
+          video.currentTime = currentTime;
+          if (paused) video.pause();
+          else video.play().catch(() => {});
+        }
         setTimeout(() => {
           isProcessingSync.current = false;
         }, 200);
@@ -194,16 +202,22 @@ const PartyRoomPage = () => {
     }
   };
 
-  const handleVideoEvent = () => {
-    if (!videoRef.current || isProcessingSync.current) return;
+  const handleVideoEvent = (action: "PLAY" | "PAUSE" | "SEEK") => {
+    if (
+      !videoRef.current ||
+      isProcessingSync.current ||
+      !stompClient?.connected
+    )
+      return;
 
-    const state = {
+    const state: VideoState = {
       currentTime: videoRef.current.currentTime,
       paused: videoRef.current.paused,
+      action: action,
     };
 
     // Only send if allowed
-    if (isHostControl && isHost) {
+    if (!isHostControl || isHost) {
       stompClient?.publish({
         destination: `/pub/party/${partyId}/video`,
         body: JSON.stringify(state),
@@ -231,14 +245,22 @@ const PartyRoomPage = () => {
     const video = videoRef.current;
     if (!video) return;
 
-    video.addEventListener("play", handleVideoEvent);
-    video.addEventListener("pause", handleVideoEvent);
-    video.addEventListener("seeked", handleVideoEvent);
+    const onPlay = () => handleVideoEvent("PLAY");
+    const onPause = () => {
+      if (!video.seeking) {
+        handleVideoEvent("PAUSE");
+      }
+    };
+    const onSeek = () => handleVideoEvent("SEEK");
+
+    video.addEventListener("play", onPlay);
+    video.addEventListener("pause", onPause);
+    video.addEventListener("seeked", onSeek);
 
     return () => {
-      video.removeEventListener("play", handleVideoEvent);
-      video.removeEventListener("pause", handleVideoEvent);
-      video.removeEventListener("seeked", handleVideoEvent);
+      video.removeEventListener("play", onPlay);
+      video.removeEventListener("pause", onPause);
+      video.removeEventListener("seeked", onSeek);
     };
   }, [isHostControl, isHost, stompClient]);
 
