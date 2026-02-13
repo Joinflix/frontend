@@ -45,6 +45,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd ~
+            docker rmi ${{ secrets.DOCKER_USERNAME }}/joinflix-front:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/joinflix-front:latest
             docker compose down
             docker compose up -d
