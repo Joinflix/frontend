@@ -58,7 +58,7 @@ const CreatePartyDialog = ({
   const [pendingPrivateData, setPendingPrivateData] =
     useState<PartyFormValues | null>(null);
 
-  const dialogWidth = step === "INVITE" ? "min-w-3xl" : "max-w-md";
+  const dialogWidth = step === "INVITE" ? "md:min-w-3xl" : "max-w-md";
 
   const {
     register,
@@ -194,7 +194,7 @@ const CreatePartyDialog = ({
       }}
     >
       <DialogContent
-        className={`bg-zinc-900 text-white border border-white/20 !w-105 px-13 py-10 ${dialogWidth}`}
+        className={`bg-zinc-900 text-white border border-white/20 sm:w-105! px-13 py-10 ${dialogWidth}`}
       >
         <DialogHeader>
           <DialogTitle className="text-center text-2xl font-bold">
@@ -216,12 +216,12 @@ const CreatePartyDialog = ({
               touchedFields={touchedFields}
             />
 
-            <DialogFooter className="flex !justify-center gap-3 mt-4">
-              <Button className="bg-zinc-700 hover:bg-zinc-700/80 rounded-sm w-[50%]">
+            <DialogFooter className="flex justify-center! gap-3 mt-4">
+              <Button className="bg-zinc-700 hover:bg-zinc-700/80 rounded-sm sm:w-[50%]">
                 예약하기
               </Button>
               <Button
-                className="bg-[#816BFF] hover:bg-[#816BFF]/80 rounded-sm w-[50%]"
+                className="bg-[#816BFF] hover:bg-[#816BFF]/80 rounded-sm sm:w-[50%]"
                 onClick={handleSubmit(onSubmit)}
               >
                 {partyType === "PRIVATE" ? "초대하기" : "시작하기"}
@@ -254,17 +254,22 @@ const CreatePartyDialog = ({
               )}
             </div>
 
-            <div className="min-h-[200px] max-h-[300px] grid grid-cols-2 gap-x-20 items-center justify-center overflow-auto">
+            <div className="min-h-[200px] max-h-[300px] grid grid-cols-1 md:grid-cols-2 md:gap-x-20 items-center justify-center overflow-auto">
               {friends.map((friend) => {
                 const isSelected = selectedFriends.includes(friend.userId);
 
                 return (
                   <div
                     key={friend.userId}
-                    className="flex justify-between items-center p-3 hover:bg-white/5 rounded-lg transition-all duration-300 group gap-4"
+                    className="flex justify-between items-center p-3 hover:bg-white/5 rounded-lg transition-all duration-300 group gap-4 cursor-pointer"
+                    onClick={() =>
+                      !createPartyIsPending &&
+                      !joinPartyIsPending &&
+                      toggleFriend(friend.userId)
+                    }
                   >
-                    <div className="flex gap-3 items-center">
-                      <div className="relative">
+                    <div className="flex gap-3 items-center min-w-0">
+                      <div className="flex-shrink-0">
                         {profileImageUrl ? (
                           <img
                             src={profileImageUrl}
@@ -276,19 +281,17 @@ const CreatePartyDialog = ({
                           </div>
                         )}
                       </div>
-                      <div className="flex flex-col">
+                      <div className="flex flex-col min-w-0">
                         <span className="text-sm text-zinc-100 font-semibold">
                           {friend.nickname}
                         </span>
-                        <span className="text-xs text-zinc-500">
+                        <span className="text-xs text-zinc-500 truncate">
                           {friend.email}
                         </span>
                       </div>
                     </div>
                     <button
-                      disabled={createPartyIsPending || joinPartyIsPending}
-                      onClick={() => toggleFriend(friend.userId)}
-                      className={`flex items-center gap-1 px-2 py-1.5 rounded-sm text-[11px] font-bold transition-all duration-300 border backdrop-blur-md active:scale-95
+                      className={`flex-shrink-0 flex items-center gap-1 px-2 py-1.5 rounded-sm text-[11px] font-bold transition-all duration-300 border backdrop-blur-md active:scale-95
                   ${
                     isSelected
                       ? "bg-[#816BFF] border-[#816BFF] text-white"
