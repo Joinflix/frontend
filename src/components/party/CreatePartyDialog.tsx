@@ -194,7 +194,7 @@ const CreatePartyDialog = ({
       }}
     >
       <DialogContent
-        className={`bg-zinc-900 text-white border border-white/20 sm:w-105! px-13 py-10 ${dialogWidth}`}
+        className={`bg-zinc-900 text-white border border-white/20 w-[90%] sm:w-105! px-13 py-10 ${dialogWidth}`}
       >
         <DialogHeader>
           <DialogTitle className="text-center text-2xl font-bold">
