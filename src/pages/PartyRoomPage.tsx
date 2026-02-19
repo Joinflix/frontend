@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import ChatWindow from "../components/partyroom/chat/ChatWindow";
-import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Mic,
+  MicOff,
+} from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router";
 import { useWebSocketStore } from "../store/useWebSocketStore";
 import { useAuthStore } from "../store/useAuthStore";
@@ -39,9 +45,29 @@ const PartyRoomPage = () => {
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
   const hasLeftManually = useRef(false);
 
+  const localAudioStreamRef = useRef<MediaStream | null>(null);
+  const peerConnections = useRef<{ [key: string]: RTCPeerConnection }>({});
+  const [isVoiceActive, setIsVoiceActive] = useState(false);
+
+  const handleSignalingDataRef = useRef<(data: any) => Promise<void>>();
+  const createPeerConnectionRef =
+    useRef<(nickname: string) => RTCPeerConnection>();
+
+  const peerConfiguration: RTCConfiguration = {
+    iceServers: [{ urls: ["stun:stun.l.google.com:19302"] }],
+  };
+
   const accessToken = useAuthStore((state) => state.accessToken);
   const isConnected = useWebSocketStore((state) => state.isConnected);
   const user = useAuthStore((state) => state.user);
+
+  const [remoteUsers, setRemoteUsers] = useState<{
+    [nickname: string]: {
+      stream: MediaStream;
+      isMuted: boolean;
+      volume: number;
+    };
+  }>({});
 
   const { data: queryPartyData, isPending: isPendingQueryPartyData } = useQuery(
     {
@@ -94,11 +120,85 @@ const PartyRoomPage = () => {
       `/sub/party/${partyId}`,
       (message) => {
         const newMessage = JSON.parse(message.body);
+
+        if (newMessage.messageType === "LEAVE") {
+          const leavingNickname = newMessage.sender;
+          console.log(`${leavingNickname} has left. Cleaning up connection...`);
+
+          // 1. Close and remove the Peer Connection
+          if (peerConnections.current[leavingNickname]) {
+            peerConnections.current[leavingNickname].close();
+            delete peerConnections.current[leavingNickname];
+          }
+
+          // 2. Remove from remoteUsers UI state
+          setRemoteUsers((prev) => {
+            const newState = { ...prev };
+            delete newState[leavingNickname];
+            return newState;
+          });
+        }
+
+        if (
+          newMessage.messageType === "ENTER" &&
+          newMessage.sender !== user?.nickName
+        ) {
+          console.log(
+            "New member detected. Initiating call to:",
+            newMessage.sender,
+          );
+          initiateCall(newMessage.sender);
+        }
+
         if (newMessage.currentCount !== undefined)
           setLiveCount(newMessage.currentCount);
         setMessages((prev) => [...prev, newMessage]);
       },
     );
+
+    const initiateCall = async (remoteNickname: string) => {
+      if (!localAudioStreamRef.current) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+          localAudioStreamRef.current = stream;
+          stream.getAudioTracks()[0].enabled = false;
+        } catch (err) {
+          console.warn("Could not get mic before initiating call:", err);
+        }
+      }
+
+      // 1. Create the connection
+      const pc = createPeerConnection(remoteNickname);
+
+      // 2. Create the Offer
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      // 3. Send the offer via signaling
+      stompClient?.publish({
+        destination: `/pub/party/${partyId}/voice`,
+        body: JSON.stringify({
+          type: "offer",
+          sdp: offer.sdp,
+          sender: user?.nickName,
+          target: remoteNickname, // Optional: tell signaling who this is for
+        }),
+      });
+
+      // Tell the new joiner your current mute state immediately
+      const audioTrack = localAudioStreamRef.current?.getAudioTracks()[0];
+      stompClient?.publish({
+        destination: `/pub/party/${partyId}/voice`,
+        body: JSON.stringify({
+          type: "mute-status",
+          sender: user?.nickName,
+          target: remoteNickname, // only they need this
+          isMuted: audioTrack ? !audioTrack.enabled : true,
+        }),
+      });
+    };
 
     // Subscribe to Video Sync
     const videoSub = stompClient.subscribe(
@@ -130,14 +230,172 @@ const PartyRoomPage = () => {
       },
     });
 
+    // Listen for WebRTC Signaling (Offers, Answers, ICE Candidates)
+    const voiceSub = stompClient.subscribe(
+      `/sub/party/${partyId}/voice`,
+      (msg) => {
+        const data = JSON.parse(msg.body);
+        // Ignore messages from yourself
+        if (data.sender === user?.nickName) return;
+
+        handleSignalingDataRef.current?.(data);
+      },
+    );
+
     return () => {
       partySub.unsubscribe();
       videoSub.unsubscribe();
+      voiceSub.unsubscribe();
+
+      // Clean up all Peer Connections
+      Object.values(peerConnections.current).forEach((pc) => pc.close());
+      peerConnections.current = {};
+
+      // Stop your own microphone track
+      if (localAudioStreamRef.current) {
+        localAudioStreamRef.current
+          .getTracks()
+          .forEach((track) => track.stop());
+        localAudioStreamRef.current = null;
+      }
     };
-  }, [stompClient, isConnected, partyId]); // REMOVED isHost and isHostControl from here
+  }, [stompClient, isConnected, partyId, user]);
+
+  useEffect(() => {
+    if (isConnected && stompClient && user) {
+      const audioTrack = localAudioStreamRef.current?.getAudioTracks()[0];
+      const currentMuteState = audioTrack ? !audioTrack.enabled : true;
+
+      stompClient.publish({
+        destination: `/pub/party/${partyId}/voice`,
+        body: JSON.stringify({
+          type: "mute-status",
+          sender: user.nickName,
+          // No target means it's a broadcast to all existing participants
+          isMuted: currentMuteState,
+        }),
+      });
+    }
+  }, [isConnected, stompClient, partyId, user]);
+
+  // 3. WebRTC Logic Functions
+  const startVoiceChat = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      localAudioStreamRef.current = stream;
+      setIsVoiceActive(true);
+
+      // In a Mesh network, you'd now create an offer for everyone in memberList
+      // For now, let's initialize the connection logic
+      console.log("Voice stream started");
+    } catch (err) {
+      console.error("Mic access denied", err);
+    }
+  };
+
+  const handleSignalingData = async (data: any) => {
+    const { type, sdp, candidate, sender, target, isMuted } = data;
+
+    if (type === "mute-status") {
+      if (target && target !== user?.nickName) return;
+      setRemoteUsers((prev) => {
+        const existing = prev[sender];
+
+        return {
+          ...prev,
+          [sender]: {
+            stream: existing?.stream ?? null,
+            volume: existing?.volume ?? 1.0,
+            isMuted: isMuted ?? true,
+          },
+        };
+      });
+      return;
+    }
+
+    // Find or create the peer connection for this specific sender
+    let pc = peerConnections.current[sender];
+
+    if (type === "offer") {
+      pc = createPeerConnection(sender);
+      await pc.setRemoteDescription(new RTCSessionDescription({ type, sdp }));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      stompClient?.publish({
+        destination: `/pub/party/${partyId}/voice`,
+        body: JSON.stringify({
+          type: "answer",
+          sdp: answer.sdp,
+          sender: user?.nickName,
+          target: sender,
+        }),
+      });
+
+      // Send YOUR mute state back to the person who just called you
+      const audioTrack = localAudioStreamRef.current?.getAudioTracks()[0];
+      stompClient?.publish({
+        destination: `/pub/party/${partyId}/voice`,
+        body: JSON.stringify({
+          type: "mute-status",
+          sender: user?.nickName,
+          target: sender, // send only to the person who initiated the call
+          isMuted: audioTrack ? !audioTrack.enabled : true,
+        }),
+      });
+    } else if (type === "answer" && pc) {
+      if (target && target !== user?.nickName) return;
+      await pc.setRemoteDescription(new RTCSessionDescription({ type, sdp }));
+    } else if (type === "candidate" && pc) {
+      if (target && target !== user?.nickName) return;
+      await pc.addIceCandidate(new RTCIceCandidate(candidate));
+    }
+  };
+  handleSignalingDataRef.current = handleSignalingData;
+
+  const createPeerConnection = (remoteNickname: string) => {
+    const pc = new RTCPeerConnection(peerConfiguration);
+
+    if (localAudioStreamRef.current) {
+      localAudioStreamRef.current.getTracks().forEach((track) => {
+        pc.addTrack(track, localAudioStreamRef.current!);
+      });
+    }
+
+    pc.ontrack = (event) => {
+      const remoteStream = event.streams[0];
+      setRemoteUsers((prev) => ({
+        ...prev,
+        [remoteNickname]: {
+          stream: remoteStream,
+          isMuted: prev[remoteNickname]?.isMuted ?? true,
+          volume: prev[remoteNickname]?.volume ?? 1.0,
+        },
+      }));
+    };
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        stompClient?.publish({
+          destination: `/pub/party/${partyId}/voice`,
+          body: JSON.stringify({
+            type: "candidate",
+            candidate: event.candidate,
+            sender: user?.nickName,
+            target: remoteNickname,
+          }),
+        });
+      }
+    };
+
+    peerConnections.current[remoteNickname] = pc;
+    return pc;
+  };
+  createPeerConnectionRef.current = createPeerConnection;
 
   const handleClickOut = () => {
     if (isHost) {
+      // TODO: 친구 목록 불러오기
       setShowLeaveDialog(true);
     } else {
       performLeave();
@@ -163,7 +421,6 @@ const PartyRoomPage = () => {
         e.returnValue = "";
       }
     };
-
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [isHost]);
@@ -172,8 +429,10 @@ const PartyRoomPage = () => {
     setIsLoadingMembers(true);
     try {
       const res = await apiClient.get(`/parties/${partyId}/members`);
-      const currentUserId = useAuthStore.getState().user?.userId;
-      const others = res.data.filter((m: any) => m.userId !== currentUserId);
+      const currentUserNickname = useAuthStore.getState().user?.nickName;
+      const others = res.data.filter(
+        (m: any) => m.userNickname !== currentUserNickname,
+      );
       if (others.length === 0) {
         setMemberList([]);
       } else {
@@ -209,7 +468,6 @@ const PartyRoomPage = () => {
       !stompClient?.connected
     )
       return;
-
     const state: VideoState = {
       currentTime: videoRef.current.currentTime,
       paused: videoRef.current.paused,
@@ -244,7 +502,6 @@ const PartyRoomPage = () => {
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-
     const onPlay = () => handleVideoEvent("PLAY");
     const onPause = () => {
       if (!video.seeking) {
@@ -252,11 +509,9 @@ const PartyRoomPage = () => {
       }
     };
     const onSeek = () => handleVideoEvent("SEEK");
-
     video.addEventListener("play", onPlay);
     video.addEventListener("pause", onPause);
     video.addEventListener("seeked", onSeek);
-
     return () => {
       video.removeEventListener("play", onPlay);
       video.removeEventListener("pause", onPause);
@@ -290,6 +545,52 @@ const PartyRoomPage = () => {
     );
   }
 
+  const onToggleVoice = async () => {
+    try {
+      // 1. If no stream exists, start it
+      if (!localAudioStreamRef.current) {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        localAudioStreamRef.current = stream;
+
+        // Ensure the track is ON when first started
+        stream.getAudioTracks()[0].enabled = true;
+        setIsVoiceActive(true);
+
+        // Attach to any existing peer connections
+        Object.values(peerConnections.current).forEach((pc) => {
+          stream.getTracks().forEach((track) => {
+            pc.addTrack(track, stream);
+          });
+        });
+
+        return; // Exit after initializing
+      }
+
+      // 2. If stream exists, toggle the 'enabled' property
+      const audioTrack = localAudioStreamRef.current.getAudioTracks()[0];
+      if (audioTrack) {
+        const nextState = !audioTrack.enabled;
+        audioTrack.enabled = nextState; // This is the actual "Mute/Unmute" line
+        setIsVoiceActive(nextState);
+
+        stompClient?.publish({
+          destination: `/pub/party/${partyId}/voice`,
+          body: JSON.stringify({
+            type: "mute-status",
+            sender: user?.nickName,
+            isMuted: !nextState,
+          }),
+        });
+      }
+    } catch (err) {
+      console.error("Mic toggle error:", err);
+      // Optional: Alert the user if they blocked the mic
+      setIsVoiceActive(false);
+    }
+  };
+
   return (
     <div className="flex h-screen relative">
       {/* Video */}
@@ -312,6 +613,36 @@ const PartyRoomPage = () => {
           className="object-contain w-full h-full max-h-screen max-w-screen"
           controls={!isHostControl || isHost}
         />
+
+        {/* Floating Voice Control */}
+        {isChatMinimized && (
+          <div className="absolute top-6 right-6 z-30 flex flex-col items-center gap-2 group">
+            <button
+              onClick={onToggleVoice}
+              className={`
+              group relative flex h-7 w-7 items-center justify-center rounded-full 
+              border border-white/10 shadow-2xl transition-all duration-300 
+              hover:scale-110 active:scale-95 cursor-pointer ring-4 ring-[#816BFF]/20
+              ${isVoiceActive ? "bg-[#816BFF] text-white" : "bg-zinc-800 text-zinc-500"}
+            `}
+            >
+              {isVoiceActive && (
+                <div className="absolute inset-0 rounded-full animate-ping bg-[#816BFF]/40" />
+              )}
+
+              {isVoiceActive ? (
+                <Mic className="size-4" />
+              ) : (
+                <MicOff className="size-4" />
+              )}
+            </button>
+
+            {/* tooltip */}
+            <span className="absolute top-0.5 right-9 px-2 py-1 text-xs text-white bg-black/80 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+              {isVoiceActive ? "클릭해서 마이크 끄기" : "클릭해서 마이크 켜기"}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Chat */}
@@ -324,6 +655,11 @@ const PartyRoomPage = () => {
           onSendMessage={sendChat}
           partyData={finalPartyData}
           currentCount={displayCount}
+          isVoiceActive={isVoiceActive}
+          onToggleVoice={onToggleVoice}
+          remoteUsers={remoteUsers}
+          setRemoteUsers={setRemoteUsers}
+          localStream={localAudioStreamRef.current}
         />
       </div>
 
