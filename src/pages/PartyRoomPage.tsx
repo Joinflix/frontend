@@ -61,6 +61,8 @@ const PartyRoomPage = () => {
   const isConnected = useWebSocketStore((state) => state.isConnected);
   const user = useAuthStore((state) => state.user);
 
+  const isUserSeeking = useRef(false);
+
   const [remoteUsers, setRemoteUsers] = useState<{
     [nickname: string]: {
       stream: MediaStream;
@@ -204,7 +206,21 @@ const PartyRoomPage = () => {
     const videoSub = stompClient.subscribe(
       `/sub/party/${partyId}/video`,
       (msg) => {
-        const { currentTime, paused, action } = JSON.parse(msg.body);
+        const data = JSON.parse(msg.body);
+        const { currentTime, paused, action, messageType, sender, message } =
+          data;
+
+        if (messageType === "SYSTEM" && message) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              messageType: "SYSTEM",
+              sender: sender || "System",
+              message: message,
+            },
+          ]);
+        }
+
         const video = videoRef.current;
         if (!video || isHostRef.current) return;
         isProcessingSync.current = true; // Lock local events
@@ -502,20 +518,40 @@ const PartyRoomPage = () => {
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    const onPlay = () => handleVideoEvent("PLAY");
+
+    const onSeeking = () => {
+      isUserSeeking.current = true;
+    };
+
+    const onSeeked = () => {
+      handleVideoEvent("SEEK");
+      setTimeout(() => {
+        isUserSeeking.current = false;
+      }, 100);
+    };
+
+    const onPlay = () => {
+      if (!isUserSeeking.current) {
+        handleVideoEvent("PLAY");
+      }
+    };
+
     const onPause = () => {
-      if (!video.seeking) {
+      if (!video.seeking && !isUserSeeking.current) {
         handleVideoEvent("PAUSE");
       }
     };
-    const onSeek = () => handleVideoEvent("SEEK");
+
+    video.addEventListener("seeking", onSeeking);
+    video.addEventListener("seeked", onSeeked);
     video.addEventListener("play", onPlay);
     video.addEventListener("pause", onPause);
-    video.addEventListener("seeked", onSeek);
+
     return () => {
+      video.removeEventListener("seeking", onSeeking);
+      video.removeEventListener("seeked", onSeeked);
       video.removeEventListener("play", onPlay);
       video.removeEventListener("pause", onPause);
-      video.removeEventListener("seeked", onSeek);
     };
   }, [isHostControl, isHost, stompClient]);
 
