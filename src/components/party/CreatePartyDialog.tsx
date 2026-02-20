@@ -362,9 +362,9 @@ const CreatePartyDialog = ({
           <div className="absolute inset-0 z-50 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center">
             <AnimatedGradientText
               speed={1}
-              colorFrom="#816BFF"
-              colorTo="#0000"
-              className="text-lg pt-10 pb-0 font-semibold tracking-tight"
+              colorFrom="#0000"
+              colorTo="#A394FF"
+              className="text-xl pt-10 pb-0 font-bold tracking-tight"
             >
               친구들에게 초대장 전송 중...
             </AnimatedGradientText>

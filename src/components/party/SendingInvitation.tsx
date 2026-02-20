@@ -92,6 +92,8 @@ export function SendingInvitation({
         containerRef={containerRef}
         fromRef={div7Ref}
         toRef={div6Ref}
+        duration={4}
+        pathWidth={4}
       />
       {mounted &&
         receiverList.map((_, index) => {
