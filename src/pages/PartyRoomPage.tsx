@@ -323,6 +323,18 @@ const PartyRoomPage = () => {
     let pc = peerConnections.current[sender];
 
     if (type === "offer") {
+      if (!localAudioStreamRef.current) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+          localAudioStreamRef.current = stream;
+          stream.getAudioTracks()[0].enabled = false; // start muted
+        } catch (err) {
+          console.warn("Could not get mic for answer:", err);
+        }
+      }
+
       pc = createPeerConnection(sender);
       await pc.setRemoteDescription(new RTCSessionDescription({ type, sdp }));
       const answer = await pc.createAnswer();
