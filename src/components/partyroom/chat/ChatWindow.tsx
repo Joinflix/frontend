@@ -26,7 +26,7 @@ interface ChatWindowProps {
   onSendMessage: (text: string) => void;
   isVoiceActive: boolean;
   onToggleVoice: () => void;
-  partyData: any;
+  queryPartyData: any;
   currentCount: number;
   remoteUsers: { [nickname: string]: RemoteUser };
   setRemoteUsers: React.Dispatch<
@@ -45,7 +45,7 @@ const USER_COLORS = [
 const ChatWindow = ({
   messages,
   onSendMessage,
-  partyData,
+  queryPartyData,
   currentCount,
   isVoiceActive,
   onToggleVoice,
@@ -88,7 +88,7 @@ const ChatWindow = ({
         <div className="flex flex-col pt-3">
           {/* 파티룸 이름, 영화 제목 */}
           <div className="text-center text-white text-base">
-            {partyData?.roomName}
+            {queryPartyData?.roomName}
           </div>
           {/* 참여 인원 */}
           <div className="flex flex-row text-white/70 items-center justify-center gap-1">
@@ -104,7 +104,7 @@ const ChatWindow = ({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-white font-medium truncate">
-                  {partyData?.hostNickname}
+                  {queryPartyData?.hostNickname}
                 </p>
                 <p className="text-[10px] text-zinc-500">Party Host</p>
               </div>

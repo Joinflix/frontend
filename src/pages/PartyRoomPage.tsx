@@ -10,7 +10,7 @@ import {
 import { useLocation, useNavigate, useParams } from "react-router";
 import { useWebSocketStore } from "../store/useWebSocketStore";
 import { useAuthStore } from "../store/useAuthStore";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../api/axios";
 
 const chevronStyle = "stroke-zinc-600 stroke-5";
@@ -39,10 +39,7 @@ const PartyRoomPage = () => {
 
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [isDelegating, setIsDelegating] = useState(false);
-  const [memberList, setMemberList] = useState<
-    { userId: string; nickname: string }[]
-  >([]);
-  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
+
   const hasLeftManually = useRef(false);
 
   const localAudioStreamRef = useRef<MediaStream | null>(null);
@@ -63,6 +60,8 @@ const PartyRoomPage = () => {
 
   const isUserSeeking = useRef(false);
 
+  const queryClient = useQueryClient();
+
   const [remoteUsers, setRemoteUsers] = useState<{
     [nickname: string]: {
       stream: MediaStream;
@@ -71,48 +70,35 @@ const PartyRoomPage = () => {
     };
   }>({});
 
-  const { data: queryPartyData, isPending: isPendingQueryPartyData } = useQuery(
-    {
+  const { data: queryPartyData, isPending: isPendingQueryqueryPartyData } =
+    useQuery({
       queryKey: ["queryPartyData", partyId],
       queryFn: async () => {
         const res = await apiClient.get(`/parties/${partyId}`);
         return res.data;
       },
-      enabled: !!partyId && !location.state?.partyData,
-    },
-  );
-  const finalPartyData = location.state?.partyData || queryPartyData;
+      enabled: !!partyId,
+      initialData: location.state?.queryPartyData,
+    });
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const isProcessingSync = useRef(false);
 
   const isHost =
-    finalPartyData && user
-      ? String(finalPartyData.hostNickname) === String(user.nickName)
+    queryPartyData && user
+      ? String(queryPartyData.hostNickname) === String(user.nickName)
       : false;
   const isHostRef = useRef(isHost);
+  useEffect(() => {
+    isHostRef.current =
+      queryPartyData && user
+        ? String(queryPartyData.hostNickname) === String(user.nickName)
+        : false;
+  }, [queryPartyData, user]);
 
   const [isHostControl, setIsHostControl] = useState(true);
 
-  useEffect(() => {
-    isHostRef.current = isHost;
-  }, [isHost]);
-
-  useEffect(() => {
-    if (finalPartyData) {
-      console.log("Party Data Loaded. Host ID:", finalPartyData.hostId);
-      console.log("Current User ID:", user?.userId);
-      console.log("Is Host?:", isHost);
-    }
-  }, [finalPartyData, user, isHost]);
-
-  const [videoState, setVideoState] = useState({
-    currentTime: 0,
-    paused: true,
-  });
-
   const chatWidth = 336;
-  const handleWidth = 32;
 
   useEffect(() => {
     if (!stompClient || !isConnected || !partyId) return;
@@ -124,8 +110,12 @@ const PartyRoomPage = () => {
         const newMessage = JSON.parse(message.body);
 
         if (newMessage.messageType === "LEAVE") {
+          queryClient.invalidateQueries({
+            queryKey: ["queryPartyData", partyId],
+          });
           const leavingNickname = newMessage.sender;
-          console.log(`${leavingNickname} has left. Cleaning up connection...`);
+
+          //TODO: set host nickname to 'newly delegated user's nickname'
 
           // 1. Close and remove the Peer Connection
           if (peerConnections.current[leavingNickname]) {
@@ -418,15 +408,37 @@ const PartyRoomPage = () => {
     }
   };
 
-  const performLeave = (newHostId?: string) => {
+  // vetted
+  const performLeave = async (newHostId?: string) => {
+    const selectedMember = memberList?.find((m) => m.memberId === newHostId);
+
+    console.log("performLeave called: " + newHostId);
     hasLeftManually.current = true;
     if (stompClient?.connected) {
       stompClient.publish({
         destination: `/pub/party/${partyId}/leave`,
-        body: JSON.stringify({ nextHostId: newHostId }), // Send delegation if exists
+        body: JSON.stringify({ targetMemberId: newHostId }),
         headers: { Authorization: accessToken },
       });
     }
+
+    if (newHostId) {
+      console.log("Delegating to:", selectedMember?.memberNickname);
+      const partyData = await queryClient.fetchQuery({
+        queryKey: ["queryPartyData", partyId],
+        queryFn: async () => {
+          const res = await apiClient.get(`/parties/${partyId}`);
+          return res.data;
+        },
+      });
+
+      console.log("New Host is:", partyData.hostNickname);
+
+      setIsDelegating(false);
+      setShowLeaveDialog(false);
+    }
+
+    console.log("performLeave end reached: " + newHostId);
     navigate(-1);
   };
 
@@ -441,26 +453,24 @@ const PartyRoomPage = () => {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [isHost]);
 
-  const handleFetchMembers = async () => {
-    setIsLoadingMembers(true);
-    try {
+  // vetted
+  const {
+    data: memberList,
+    isFetching: isFetchingMemberList,
+    refetch: fetchMemberList,
+  } = useQuery({
+    queryKey: ["memberList"],
+    queryFn: async () => {
       const res = await apiClient.get(`/parties/${partyId}/members`);
-      const currentUserNickname = useAuthStore.getState().user?.nickName;
-      const others = res.data.filter(
-        (m: any) => m.userNickname !== currentUserNickname,
-      );
-      if (others.length === 0) {
-        setMemberList([]);
-      } else {
-        setMemberList(others);
-      }
-      setIsDelegating(true);
-    } catch (error) {
-      console.error("Failed to load members", error);
-      alert("멤버 목록을 불러오지 못했습니다.");
-    } finally {
-      setIsLoadingMembers(false);
-    }
+      return res.data;
+    },
+    enabled: false,
+  });
+
+  // vetted
+  const handleFetchMemberList = async () => {
+    await fetchMemberList();
+    setIsDelegating(true);
   };
 
   const sendChat = (text: string) => {
@@ -484,6 +494,9 @@ const PartyRoomPage = () => {
       !stompClient?.connected
     )
       return;
+
+    if (isHostControl && !isHost) return;
+
     const state: VideoState = {
       currentTime: videoRef.current.currentTime,
       paused: videoRef.current.paused,
@@ -555,10 +568,10 @@ const PartyRoomPage = () => {
     };
   }, [isHostControl, isHost, stompClient]);
 
-  const displayCount = liveCount ?? finalPartyData?.currentMemberCount ?? 0;
+  const displayCount = liveCount ?? queryPartyData?.currentMemberCount ?? 0;
 
   // Place this right before your main return
-  if (isPendingQueryPartyData && !finalPartyData) {
+  if (isPendingQueryqueryPartyData && !queryPartyData) {
     return (
       <div className="h-screen w-full bg-black flex flex-col items-center justify-center text-white gap-4">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#816BFF]"></div>
@@ -570,7 +583,7 @@ const PartyRoomPage = () => {
   }
 
   // Second safety guard: if data fails to load or doesn't exist
-  if (!finalPartyData) {
+  if (!queryPartyData) {
     return (
       <div className="h-screen w-full bg-black flex items-center justify-center text-white">
         <p>파티를 찾을 수 없습니다.</p>
@@ -639,7 +652,7 @@ const PartyRoomPage = () => {
               onClick={handleClickOut}
             />
             <span className="pointer-events-none">
-              {finalPartyData.movieTitle}
+              {queryPartyData.movieTitle}
             </span>
           </div>
         </div>
@@ -689,7 +702,7 @@ const PartyRoomPage = () => {
         <ChatWindow
           messages={messages}
           onSendMessage={sendChat}
-          partyData={finalPartyData}
+          queryPartyData={queryPartyData}
           currentCount={displayCount}
           isVoiceActive={isVoiceActive}
           onToggleVoice={onToggleVoice}
@@ -743,16 +756,18 @@ const PartyRoomPage = () => {
                   파티 나가기
                 </h3>
                 <p className="text-zinc-400 text-sm mb-6">
-                  방장 권한을 위임하거나 파티를 종료할 수 있습니다.
+                  호스트 권한을 위임하거나 파티를 종료할 수 있습니다.
                 </p>
 
                 <div className="flex flex-col gap-3">
                   <button
-                    onClick={handleFetchMembers}
-                    disabled={isLoadingMembers}
+                    onClick={handleFetchMemberList}
+                    disabled={isFetchingMemberList}
                     className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl transition-all font-medium disabled:opacity-50"
                   >
-                    {isLoadingMembers ? "로딩 중..." : "권한 위임 후 나가기"}
+                    {isFetchingMemberList
+                      ? "로딩 중..."
+                      : "권한 위임 후 나가기"}
                   </button>
                   <button
                     onClick={() => performLeave()} // No ID passed = Backend closes party
@@ -771,21 +786,21 @@ const PartyRoomPage = () => {
             ) : (
               <>
                 <h3 className="text-xl font-bold text-white mb-4">
-                  새 방장 선택
+                  새 호스트 선택
                 </h3>
                 <div className="max-h-60 overflow-y-auto mb-6 flex flex-col gap-2 pr-1 custom-scrollbar">
-                  {memberList.length > 0 ? (
+                  {!isFetchingMemberList && memberList?.length > 0 ? (
                     memberList.map((member) => (
                       <button
-                        key={member.userId}
-                        onClick={() => performLeave(member.userId)}
-                        className="w-full flex items-center gap-3 p-3 rounded-xl bg-zinc-800/50 hover:bg-[#816BFF]/20 border border-transparent hover:border-[#816BFF]/50 transition-all text-left group"
+                        key={member.memberId}
+                        onClick={() => performLeave(member.memberId)}
+                        className="w-full flex items-center gap-3 p-3 rounded-xl bg-zinc-800/50 hover:bg-[#816BFF]/20 border border-transparent hover:border-[#816BFF]/50 transition-all text-left group cursor-pointer"
                       >
-                        <div className="w-8 h-8 rounded-full bg-zinc-700 group-hover:bg-[#816BFF] flex items-center justify-center text-xs text-white transition-colors">
-                          {member.nickname?.charAt(0)}
+                        <div className="w-8 h-8 rounded-full bg-zinc-700 group-hover:bg-[#816BFF] flex items-center justify-center text-white transition-colors font-extrabold">
+                          {member.memberNickname?.charAt(0)}
                         </div>
-                        <span className="text-white font-medium">
-                          {member.nickname}
+                        <span className="text-white font-medium text-sm">
+                          {member.memberNickname}
                         </span>
                       </button>
                     ))
