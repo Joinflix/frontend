@@ -70,31 +70,30 @@ const PartyRoomPage = () => {
     };
   }>({});
 
-  const { data: queryPartyData, isPending: isPendingQueryqueryPartyData } =
-    useQuery({
-      queryKey: ["queryPartyData", partyId],
-      queryFn: async () => {
-        const res = await apiClient.get(`/parties/${partyId}`);
-        return res.data;
-      },
-      enabled: !!partyId,
-      initialData: location.state?.queryPartyData,
-    });
+  const { data: partyData, isPending: isPendingPartyData } = useQuery({
+    queryKey: ["partyData", partyId],
+    queryFn: async () => {
+      const res = await apiClient.get(`/parties/${partyId}`);
+      return res.data;
+    },
+    enabled: !!partyId,
+    initialData: location.state?.partyData,
+  });
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const isProcessingSync = useRef(false);
 
   const isHost =
-    queryPartyData && user
-      ? String(queryPartyData.hostNickname) === String(user.nickName)
+    partyData && user
+      ? String(partyData.hostNickname) === String(user.nickName)
       : false;
   const isHostRef = useRef(isHost);
   useEffect(() => {
     isHostRef.current =
-      queryPartyData && user
-        ? String(queryPartyData.hostNickname) === String(user.nickName)
+      partyData && user
+        ? String(partyData.hostNickname) === String(user.nickName)
         : false;
-  }, [queryPartyData, user]);
+  }, [partyData, user]);
 
   const [isHostControl, setIsHostControl] = useState(true);
 
@@ -106,12 +105,40 @@ const PartyRoomPage = () => {
     // Subscribe to Chat/Events
     const partySub = stompClient.subscribe(
       `/sub/party/${partyId}`,
-      (message) => {
+      async (message) => {
         const newMessage = JSON.parse(message.body);
+
+        // 1. Existing users: When you see a newcomer, do NOT call them.
+        // Just add them to your state so you're ready to receive their Offer.
+        if (newMessage.messageType === "ENTER") {
+          if (newMessage.sender !== user?.nickName) {
+            console.log(
+              `${newMessage.sender} joined. I'll wait for their call.`,
+            );
+          } else {
+            // 2. Newcomer logic: I am the one who just joined.
+            // I need to find out who is already here and call them.
+            console.log("I joined! Fetching members to initiate calls...");
+
+            // Call the API you already have to get existing members
+            const res = await apiClient.get(`/parties/${partyId}/members`);
+            const existingMembers = res.data; // Array of members
+
+            existingMembers.forEach((member: any) => {
+              // Don't call yourself
+              if (member.memberNickname !== user?.nickName) {
+                console.log(
+                  `Initiating call to existing member: ${member.memberNickname}`,
+                );
+                initiateCall(member.memberNickname);
+              }
+            });
+          }
+        }
 
         if (newMessage.messageType === "LEAVE") {
           queryClient.invalidateQueries({
-            queryKey: ["queryPartyData", partyId],
+            queryKey: ["partyData", partyId],
           });
           const leavingNickname = newMessage.sender;
 
@@ -158,6 +185,7 @@ const PartyRoomPage = () => {
           stream.getAudioTracks()[0].enabled = false;
         } catch (err) {
           console.warn("Could not get mic before initiating call:", err);
+          return;
         }
       }
 
@@ -268,6 +296,21 @@ const PartyRoomPage = () => {
   }, [stompClient, isConnected, partyId, user]);
 
   useEffect(() => {
+    const prepareMic = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        stream.getAudioTracks()[0].enabled = false; // Stay muted initially
+        localAudioStreamRef.current = stream;
+      } catch (err) {
+        console.error("Failed to get microphone early:", err);
+      }
+    };
+    prepareMic();
+  }, []);
+
+  useEffect(() => {
     if (isConnected && stompClient && user) {
       const audioTrack = localAudioStreamRef.current?.getAudioTracks()[0];
       const currentMuteState = audioTrack ? !audioTrack.enabled : true;
@@ -323,19 +366,10 @@ const PartyRoomPage = () => {
     let pc = peerConnections.current[sender];
 
     if (type === "offer") {
-      if (!localAudioStreamRef.current) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            audio: true,
-          });
-          localAudioStreamRef.current = stream;
-          stream.getAudioTracks()[0].enabled = false; // start muted
-        } catch (err) {
-          console.warn("Could not get mic for answer:", err);
-        }
-      }
+      if (target && target !== user?.nickName) return;
 
-      pc = createPeerConnection(sender);
+      if (!pc) pc = createPeerConnection(sender);
+
       await pc.setRemoteDescription(new RTCSessionDescription({ type, sdp }));
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
@@ -364,7 +398,7 @@ const PartyRoomPage = () => {
     } else if (type === "answer" && pc) {
       if (target && target !== user?.nickName) return;
       await pc.setRemoteDescription(new RTCSessionDescription({ type, sdp }));
-    } else if (type === "candidate" && pc) {
+    } else if (type === "candidate") {
       if (target && target !== user?.nickName) return;
       await pc.addIceCandidate(new RTCIceCandidate(candidate));
     }
@@ -381,7 +415,7 @@ const PartyRoomPage = () => {
     }
 
     pc.ontrack = (event) => {
-      const remoteStream = event.streams[0];
+      const remoteStream = event.streams[0] || new MediaStream([event.track]);
       setRemoteUsers((prev) => ({
         ...prev,
         [remoteNickname]: {
@@ -437,7 +471,7 @@ const PartyRoomPage = () => {
     if (newHostId) {
       console.log("Delegating to:", selectedMember?.memberNickname);
       const partyData = await queryClient.fetchQuery({
-        queryKey: ["queryPartyData", partyId],
+        queryKey: ["partyData", partyId],
         queryFn: async () => {
           const res = await apiClient.get(`/parties/${partyId}`);
           return res.data;
@@ -580,10 +614,10 @@ const PartyRoomPage = () => {
     };
   }, [isHostControl, isHost, stompClient]);
 
-  const displayCount = liveCount ?? queryPartyData?.currentMemberCount ?? 0;
+  const displayCount = liveCount ?? partyData?.currentMemberCount ?? 0;
 
   // Place this right before your main return
-  if (isPendingQueryqueryPartyData && !queryPartyData) {
+  if (isPendingPartyData && !partyData) {
     return (
       <div className="h-screen w-full bg-black flex flex-col items-center justify-center text-white gap-4">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#816BFF]"></div>
@@ -595,7 +629,7 @@ const PartyRoomPage = () => {
   }
 
   // Second safety guard: if data fails to load or doesn't exist
-  if (!queryPartyData) {
+  if (!partyData) {
     return (
       <div className="h-screen w-full bg-black flex items-center justify-center text-white">
         <p>파티를 찾을 수 없습니다.</p>
@@ -663,9 +697,7 @@ const PartyRoomPage = () => {
               className="cursor-pointer top-4 left-4 z-10 hover:scale-120 transition-transform stroke-3"
               onClick={handleClickOut}
             />
-            <span className="pointer-events-none">
-              {queryPartyData.movieTitle}
-            </span>
+            <span className="pointer-events-none">{partyData.movieTitle}</span>
           </div>
         </div>
         <video
@@ -714,7 +746,7 @@ const PartyRoomPage = () => {
         <ChatWindow
           messages={messages}
           onSendMessage={sendChat}
-          queryPartyData={queryPartyData}
+          partyData={partyData}
           currentCount={displayCount}
           isVoiceActive={isVoiceActive}
           onToggleVoice={onToggleVoice}
