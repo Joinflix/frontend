@@ -42,7 +42,7 @@ export function SendingInvitation({
 
   const [mounted, setMounted] = React.useState(false);
 
-  const { nickname } = useAuthStore((state) => state.user?.nickName);
+  const nickname = useAuthStore((state) => state.user?.nickname);
 
   React.useEffect(() => {
     setMounted(true);

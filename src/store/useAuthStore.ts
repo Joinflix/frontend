@@ -6,7 +6,7 @@ type JwtPayload = {
   sub: string;
   email: string;
   role: string;
-  nickName: string;
+  nickname: string;
   iat: number;
   exp: number;
 };
@@ -19,11 +19,11 @@ type AuthState = {
   clearAuth: () => void;
 };
 
-type User = {
+export type User = {
   userId: number;
   email: string;
   role: string;
-  nickName: string;
+  nickname: string;
 };
 
 export const useAuthStore = create<AuthState>()(
@@ -45,7 +45,7 @@ export const useAuthStore = create<AuthState>()(
             userId: Number(decoded.sub),
             email: decoded.email,
             role: decoded.role,
-            nickName: decoded.nickName,
+            nickname: decoded.nickname,
           };
 
           set({

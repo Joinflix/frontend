@@ -82,9 +82,9 @@ const FriendSearchDialog = ({
         }
 
         // 2. Secondary Sort: Alphabetical Nickname (Ascending)
-        // Note: Using 'nickName' (Capital N) to match your JSON structure
-        const nameA = a.nickName ?? "";
-        const nameB = b.nickName ?? "";
+        // Note: Using 'nickname' (Capital N) to match your JSON structure
+        const nameA = a.nickname ?? "";
+        const nameB = b.nickname ?? "";
 
         return nameA.localeCompare(nameB, "ko");
       });

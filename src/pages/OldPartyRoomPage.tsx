@@ -85,13 +85,13 @@ const OldPartyRoomPage = () => {
 
   const isHost =
     partyData && user
-      ? String(partyData.hostNickname) === String(user.nickName)
+      ? String(partyData.hostNickname) === String(user.nickname)
       : false;
   const isHostRef = useRef(isHost);
   useEffect(() => {
     isHostRef.current =
       partyData && user
-        ? String(partyData.hostNickname) === String(user.nickName)
+        ? String(partyData.hostNickname) === String(user.nickname)
         : false;
   }, [partyData, user]);
 
@@ -111,7 +111,7 @@ const OldPartyRoomPage = () => {
         // 1. Existing users: When you see a newcomer, do NOT call them.
         // Just add them to your state so you're ready to receive their Offer.
         if (newMessage.messageType === "ENTER") {
-          if (newMessage.sender !== user?.nickName) {
+          if (newMessage.sender !== user?.nickname) {
             console.log(
               `${newMessage.sender} joined. I'll wait for their call.`,
             );
@@ -126,7 +126,7 @@ const OldPartyRoomPage = () => {
 
             existingMembers.forEach((member: any) => {
               // Don't call yourself
-              if (member.memberNickname !== user?.nickName) {
+              if (member.memberNickname !== user?.nickname) {
                 console.log(
                   `Initiating call to existing member: ${member.memberNickname}`,
                 );
@@ -160,7 +160,7 @@ const OldPartyRoomPage = () => {
 
         if (
           newMessage.messageType === "ENTER" &&
-          newMessage.sender !== user?.nickName
+          newMessage.sender !== user?.nickname
         ) {
           console.log(
             "New member detected. Initiating call to:",
@@ -202,7 +202,7 @@ const OldPartyRoomPage = () => {
         body: JSON.stringify({
           type: "offer",
           sdp: offer.sdp,
-          sender: user?.nickName,
+          sender: user?.nickname,
           target: remoteNickname, // Optional: tell signaling who this is for
         }),
       });
@@ -213,7 +213,7 @@ const OldPartyRoomPage = () => {
         destination: `/pub/party/${partyId}/voice`,
         body: JSON.stringify({
           type: "mute-status",
-          sender: user?.nickName,
+          sender: user?.nickname,
           target: remoteNickname, // only they need this
           isMuted: audioTrack ? !audioTrack.enabled : true,
         }),
@@ -270,7 +270,7 @@ const OldPartyRoomPage = () => {
       (msg) => {
         const data = JSON.parse(msg.body);
         // Ignore messages from yourself
-        if (data.sender === user?.nickName) return;
+        if (data.sender === user?.nickname) return;
 
         handleSignalingDataRef.current?.(data);
       },
@@ -319,7 +319,7 @@ const OldPartyRoomPage = () => {
         destination: `/pub/party/${partyId}/voice`,
         body: JSON.stringify({
           type: "mute-status",
-          sender: user.nickName,
+          sender: user.nickname,
           // No target means it's a broadcast to all existing participants
           isMuted: currentMuteState,
         }),
@@ -346,7 +346,7 @@ const OldPartyRoomPage = () => {
     const { type, sdp, candidate, sender, target, isMuted } = data;
 
     if (type === "mute-status") {
-      if (target && target !== user?.nickName) return;
+      if (target && target !== user?.nickname) return;
       setRemoteUsers((prev) => {
         const existing = prev[sender];
 
@@ -366,7 +366,7 @@ const OldPartyRoomPage = () => {
     let pc = peerConnections.current[sender];
 
     if (type === "offer") {
-      if (target && target !== user?.nickName) return;
+      if (target && target !== user?.nickname) return;
 
       if (!pc) pc = createPeerConnection(sender);
 
@@ -379,7 +379,7 @@ const OldPartyRoomPage = () => {
         body: JSON.stringify({
           type: "answer",
           sdp: answer.sdp,
-          sender: user?.nickName,
+          sender: user?.nickname,
           target: sender,
         }),
       });
@@ -390,16 +390,16 @@ const OldPartyRoomPage = () => {
         destination: `/pub/party/${partyId}/voice`,
         body: JSON.stringify({
           type: "mute-status",
-          sender: user?.nickName,
+          sender: user?.nickname,
           target: sender, // send only to the person who initiated the call
           isMuted: audioTrack ? !audioTrack.enabled : true,
         }),
       });
     } else if (type === "answer" && pc) {
-      if (target && target !== user?.nickName) return;
+      if (target && target !== user?.nickname) return;
       await pc.setRemoteDescription(new RTCSessionDescription({ type, sdp }));
     } else if (type === "candidate") {
-      if (target && target !== user?.nickName) return;
+      if (target && target !== user?.nickname) return;
       await pc.addIceCandidate(new RTCIceCandidate(candidate));
     }
   };
@@ -433,7 +433,7 @@ const OldPartyRoomPage = () => {
           body: JSON.stringify({
             type: "candidate",
             candidate: event.candidate,
-            sender: user?.nickName,
+            sender: user?.nickname,
             target: remoteNickname,
           }),
         });
@@ -674,7 +674,7 @@ const OldPartyRoomPage = () => {
           destination: `/pub/party/${partyId}/voice`,
           body: JSON.stringify({
             type: "mute-status",
-            sender: user?.nickName,
+            sender: user?.nickname,
             isMuted: !nextState,
           }),
         });
