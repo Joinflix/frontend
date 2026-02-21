@@ -11,6 +11,7 @@ import {
   InputOTPSlot,
 } from "../components/ui/input-otp";
 import { FALLBACK_ERROR_MESSAGE } from "../global/const/error";
+import type { PartyRoomData } from "../types/party";
 
 const OTP_BOX_STYLE =
   "!rounded-xs border w-13 h-15 border-[#816BFF] bg-[#816BFF]/10 text-4xl font-extrabold text-[#816BFF]";
@@ -32,7 +33,7 @@ const PartyPage = () => {
     },
   });
 
-  const handleClickPartyRoom = (partyRoom) => {
+  const handleClickPartyRoom = (partyRoom: PartyRoomData) => {
     if (partyRoom.isPublic) {
       joinParty({ partyId: partyRoom.id });
     } else {
@@ -56,7 +57,7 @@ const PartyPage = () => {
     },
     onSuccess: (data) => {
       navigate(`/watch/party/${data.id}`, {
-        state: { partyData: data },
+        state: { partyRoomData: data },
       });
     },
     onError: (err: any) => {
@@ -74,7 +75,7 @@ const PartyPage = () => {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {!isPending &&
-              partyRooms?.content?.map((partyRoom) => (
+              partyRooms?.content?.map((partyRoom: PartyRoomData) => (
                 <div
                   key={partyRoom.id}
                   className="group relative text-white rounded-sm overflow-hidden bg-gray-800 cursor-pointer hover:scale-110 transform transition ease-in-out duration-500"
@@ -117,7 +118,7 @@ const PartyPage = () => {
                     <div className="text-base">{partyRoom.roomName}</div>
                     <div className="flex items-center gap-1 text-xs text-gray-400 mt-2">
                       <div className="rounded-full bg-white w-4 h-4"></div>
-                      {partyRoom.hostName || "HOST"} |{" "}
+                      {partyRoom.hostNickname || "HOST"} |{" "}
                       {partyRoom.currentMemberCount}명 참여 중
                     </div>
 
