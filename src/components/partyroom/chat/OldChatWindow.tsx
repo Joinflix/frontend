@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import VoiceVisualizer from "./VoiceVisualizer";
+import type { PartyData } from "../../../types/party";
 
 interface RemoteUser {
   stream: MediaStream;
@@ -26,7 +27,7 @@ interface ChatWindowProps {
   onSendMessage: (text: string) => void;
   isVoiceActive: boolean;
   onToggleVoice: () => void;
-  partyData: any;
+  partyData: PartyData;
   currentCount: number;
   remoteUsers: { [nickname: string]: RemoteUser };
   setRemoteUsers: React.Dispatch<
@@ -42,7 +43,7 @@ const USER_COLORS = [
   "text-orange-400",
 ];
 
-const ChatWindow = ({
+const OldChatWindow = ({
   messages,
   onSendMessage,
   partyData,
@@ -322,4 +323,4 @@ const ChatWindow = ({
   );
 };
 
-export default ChatWindow;
+export default OldChatWindow;

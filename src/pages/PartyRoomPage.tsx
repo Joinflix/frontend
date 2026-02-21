@@ -1,525 +1,36 @@
+import { useQueryClient } from "@tanstack/react-query";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useLocation, useParams } from "react-router";
 import { useEffect, useRef, useState } from "react";
-import ChatWindow from "../components/partyroom/chat/ChatWindow";
-import {
-  ArrowLeft,
-  ChevronLeft,
-  ChevronRight,
-  Mic,
-  MicOff,
-} from "lucide-react";
-import { useLocation, useNavigate, useParams } from "react-router";
-import { useWebSocketStore } from "../store/useWebSocketStore";
 import { useAuthStore } from "../store/useAuthStore";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import apiClient from "../api/axios";
+import { useWebSocketStore } from "../store/useWebSocketStore";
+import { useRequestPartyData } from "../api/queries/useRequestPartyData";
+import VideoPlayer from "../components/partyroom/video/VideoPlayer";
+import MicControlOverlay from "../components/partyroom/chat/MicControlOverlay";
+import ChatPanel from "../components/partyroom/chat/ChatPanel";
+import type { ChatStompMessage } from "../types/chat";
 
+const chatWidth = 336;
 const chevronStyle = "stroke-zinc-600 stroke-5";
-interface ChatMessage {
-  messageType: "TALK" | "ENTER" | "LEAVE" | "SYSTEM";
-  sender: string;
-  message: string;
-  currentCount?: number;
-}
-interface VideoState {
-  currentTime: number;
-  paused: boolean;
-  action: "PLAY" | "PAUSE" | "SEEK";
-}
 
 const PartyRoomPage = () => {
-  const navigate = useNavigate();
   const { partyId } = useParams();
   const location = useLocation();
 
-  const [isChatMinimized, setIsChatMinimized] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const stompClient = useWebSocketStore((state) => state.stompClient);
-  const [liveCount, setLiveCount] = useState<number | null>(null);
-  const [isPartyClosed, setIsPartyClosed] = useState(false);
-
-  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
-  const [isDelegating, setIsDelegating] = useState(false);
-
-  const hasLeftManually = useRef(false);
-
-  const localAudioStreamRef = useRef<MediaStream | null>(null);
-  const peerConnections = useRef<{ [key: string]: RTCPeerConnection }>({});
-  const [isVoiceActive, setIsVoiceActive] = useState(false);
-
-  const handleSignalingDataRef = useRef<(data: any) => Promise<void>>();
-  const createPeerConnectionRef =
-    useRef<(nickname: string) => RTCPeerConnection>();
-
-  const peerConfiguration: RTCConfiguration = {
-    iceServers: [{ urls: ["stun:stun.l.google.com:19302"] }],
-  };
-
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const isConnected = useWebSocketStore((state) => state.isConnected);
   const user = useAuthStore((state) => state.user);
-
-  const isUserSeeking = useRef(false);
-
-  const queryClient = useQueryClient();
-
-  const [remoteUsers, setRemoteUsers] = useState<{
-    [nickname: string]: {
-      stream: MediaStream;
-      isMuted: boolean;
-      volume: number;
-    };
-  }>({});
-
-  const { data: partyData, isPending: isPendingPartyData } = useQuery({
-    queryKey: ["partyData", partyId],
-    queryFn: async () => {
-      const res = await apiClient.get(`/parties/${partyId}`);
-      return res.data;
-    },
-    enabled: !!partyId,
-    initialData: location.state?.partyData,
-  });
-
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const isProcessingSync = useRef(false);
-
-  const isHost =
-    partyData && user
-      ? String(partyData.hostNickname) === String(user.nickName)
-      : false;
-  const isHostRef = useRef(isHost);
-  useEffect(() => {
-    isHostRef.current =
-      partyData && user
-        ? String(partyData.hostNickname) === String(user.nickName)
-        : false;
-  }, [partyData, user]);
-
-  const [isHostControl, setIsHostControl] = useState(true);
-
-  const chatWidth = 336;
-
-  useEffect(() => {
-    if (!stompClient || !isConnected || !partyId) return;
-
-    // Subscribe to Chat/Events
-    const partySub = stompClient.subscribe(
-      `/sub/party/${partyId}`,
-      async (message) => {
-        const newMessage = JSON.parse(message.body);
-
-        // 1. Existing users: When you see a newcomer, do NOT call them.
-        // Just add them to your state so you're ready to receive their Offer.
-        if (newMessage.messageType === "ENTER") {
-          if (newMessage.sender !== user?.nickName) {
-            console.log(
-              `${newMessage.sender} joined. I'll wait for their call.`,
-            );
-          } else {
-            // 2. Newcomer logic: I am the one who just joined.
-            // I need to find out who is already here and call them.
-            console.log("I joined! Fetching members to initiate calls...");
-
-            // Call the API you already have to get existing members
-            const res = await apiClient.get(`/parties/${partyId}/members`);
-            const existingMembers = res.data; // Array of members
-
-            existingMembers.forEach((member: any) => {
-              // Don't call yourself
-              if (member.memberNickname !== user?.nickName) {
-                console.log(
-                  `Initiating call to existing member: ${member.memberNickname}`,
-                );
-                initiateCall(member.memberNickname);
-              }
-            });
-          }
-        }
-
-        if (newMessage.messageType === "LEAVE") {
-          queryClient.invalidateQueries({
-            queryKey: ["partyData", partyId],
-          });
-          const leavingNickname = newMessage.sender;
-
-          //TODO: set host nickname to 'newly delegated user's nickname'
-
-          // 1. Close and remove the Peer Connection
-          if (peerConnections.current[leavingNickname]) {
-            peerConnections.current[leavingNickname].close();
-            delete peerConnections.current[leavingNickname];
-          }
-
-          // 2. Remove from remoteUsers UI state
-          setRemoteUsers((prev) => {
-            const newState = { ...prev };
-            delete newState[leavingNickname];
-            return newState;
-          });
-        }
-
-        if (
-          newMessage.messageType === "ENTER" &&
-          newMessage.sender !== user?.nickName
-        ) {
-          console.log(
-            "New member detected. Initiating call to:",
-            newMessage.sender,
-          );
-          initiateCall(newMessage.sender);
-        }
-
-        if (newMessage.currentCount !== undefined)
-          setLiveCount(newMessage.currentCount);
-        setMessages((prev) => [...prev, newMessage]);
-      },
-    );
-
-    const initiateCall = async (remoteNickname: string) => {
-      if (!localAudioStreamRef.current) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            audio: true,
-          });
-          localAudioStreamRef.current = stream;
-          stream.getAudioTracks()[0].enabled = false;
-        } catch (err) {
-          console.warn("Could not get mic before initiating call:", err);
-          return;
-        }
-      }
-
-      // 1. Create the connection
-      const pc = createPeerConnection(remoteNickname);
-
-      // 2. Create the Offer
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-
-      // 3. Send the offer via signaling
-      stompClient?.publish({
-        destination: `/pub/party/${partyId}/voice`,
-        body: JSON.stringify({
-          type: "offer",
-          sdp: offer.sdp,
-          sender: user?.nickName,
-          target: remoteNickname, // Optional: tell signaling who this is for
-        }),
-      });
-
-      // Tell the new joiner your current mute state immediately
-      const audioTrack = localAudioStreamRef.current?.getAudioTracks()[0];
-      stompClient?.publish({
-        destination: `/pub/party/${partyId}/voice`,
-        body: JSON.stringify({
-          type: "mute-status",
-          sender: user?.nickName,
-          target: remoteNickname, // only they need this
-          isMuted: audioTrack ? !audioTrack.enabled : true,
-        }),
-      });
-    };
-
-    // Subscribe to Video Sync
-    const videoSub = stompClient.subscribe(
-      `/sub/party/${partyId}/video`,
-      (msg) => {
-        const data = JSON.parse(msg.body);
-        const { currentTime, paused, action, messageType, sender, message } =
-          data;
-
-        if (messageType === "SYSTEM" && message) {
-          setMessages((prev) => [
-            ...prev,
-            {
-              messageType: "SYSTEM",
-              sender: sender || "System",
-              message: message,
-            },
-          ]);
-        }
-
-        const video = videoRef.current;
-        if (!video || isHostRef.current) return;
-        isProcessingSync.current = true; // Lock local events
-        if (action === "SEEK") {
-          video.currentTime = currentTime;
-        } else {
-          video.currentTime = currentTime;
-          if (paused) video.pause();
-          else video.play().catch(() => {});
-        }
-        setTimeout(() => {
-          isProcessingSync.current = false;
-        }, 200);
-      },
-    );
-
-    stompClient.publish({
-      destination: `/pub/party/${partyId}/enter`,
-      headers: {
-        Authorization: accessToken?.startsWith("Bearer ")
-          ? accessToken
-          : `Bearer ${accessToken}`,
-      },
-    });
-
-    // Listen for WebRTC Signaling (Offers, Answers, ICE Candidates)
-    const voiceSub = stompClient.subscribe(
-      `/sub/party/${partyId}/voice`,
-      (msg) => {
-        const data = JSON.parse(msg.body);
-        // Ignore messages from yourself
-        if (data.sender === user?.nickName) return;
-
-        handleSignalingDataRef.current?.(data);
-      },
-    );
-
-    return () => {
-      partySub.unsubscribe();
-      videoSub.unsubscribe();
-      voiceSub.unsubscribe();
-
-      // Clean up all Peer Connections
-      Object.values(peerConnections.current).forEach((pc) => pc.close());
-      peerConnections.current = {};
-
-      // Stop your own microphone track
-      if (localAudioStreamRef.current) {
-        localAudioStreamRef.current
-          .getTracks()
-          .forEach((track) => track.stop());
-        localAudioStreamRef.current = null;
-      }
-    };
-  }, [stompClient, isConnected, partyId, user]);
-
-  useEffect(() => {
-    const prepareMic = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-        });
-        stream.getAudioTracks()[0].enabled = false; // Stay muted initially
-        localAudioStreamRef.current = stream;
-      } catch (err) {
-        console.error("Failed to get microphone early:", err);
-      }
-    };
-    prepareMic();
-  }, []);
-
-  useEffect(() => {
-    if (isConnected && stompClient && user) {
-      const audioTrack = localAudioStreamRef.current?.getAudioTracks()[0];
-      const currentMuteState = audioTrack ? !audioTrack.enabled : true;
-
-      stompClient.publish({
-        destination: `/pub/party/${partyId}/voice`,
-        body: JSON.stringify({
-          type: "mute-status",
-          sender: user.nickName,
-          // No target means it's a broadcast to all existing participants
-          isMuted: currentMuteState,
-        }),
-      });
-    }
-  }, [isConnected, stompClient, partyId, user]);
-
-  // 3. WebRTC Logic Functions
-  const startVoiceChat = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      localAudioStreamRef.current = stream;
-      setIsVoiceActive(true);
-
-      // In a Mesh network, you'd now create an offer for everyone in memberList
-      // For now, let's initialize the connection logic
-      console.log("Voice stream started");
-    } catch (err) {
-      console.error("Mic access denied", err);
-    }
-  };
-
-  const handleSignalingData = async (data: any) => {
-    const { type, sdp, candidate, sender, target, isMuted } = data;
-
-    if (type === "mute-status") {
-      if (target && target !== user?.nickName) return;
-      setRemoteUsers((prev) => {
-        const existing = prev[sender];
-
-        return {
-          ...prev,
-          [sender]: {
-            stream: existing?.stream ?? null,
-            volume: existing?.volume ?? 1.0,
-            isMuted: isMuted ?? true,
-          },
-        };
-      });
-      return;
-    }
-
-    // Find or create the peer connection for this specific sender
-    let pc = peerConnections.current[sender];
-
-    if (type === "offer") {
-      if (target && target !== user?.nickName) return;
-
-      if (!pc) pc = createPeerConnection(sender);
-
-      await pc.setRemoteDescription(new RTCSessionDescription({ type, sdp }));
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-
-      stompClient?.publish({
-        destination: `/pub/party/${partyId}/voice`,
-        body: JSON.stringify({
-          type: "answer",
-          sdp: answer.sdp,
-          sender: user?.nickName,
-          target: sender,
-        }),
-      });
-
-      // Send YOUR mute state back to the person who just called you
-      const audioTrack = localAudioStreamRef.current?.getAudioTracks()[0];
-      stompClient?.publish({
-        destination: `/pub/party/${partyId}/voice`,
-        body: JSON.stringify({
-          type: "mute-status",
-          sender: user?.nickName,
-          target: sender, // send only to the person who initiated the call
-          isMuted: audioTrack ? !audioTrack.enabled : true,
-        }),
-      });
-    } else if (type === "answer" && pc) {
-      if (target && target !== user?.nickName) return;
-      await pc.setRemoteDescription(new RTCSessionDescription({ type, sdp }));
-    } else if (type === "candidate") {
-      if (target && target !== user?.nickName) return;
-      await pc.addIceCandidate(new RTCIceCandidate(candidate));
-    }
-  };
-  handleSignalingDataRef.current = handleSignalingData;
-
-  const createPeerConnection = (remoteNickname: string) => {
-    const pc = new RTCPeerConnection(peerConfiguration);
-
-    if (localAudioStreamRef.current) {
-      localAudioStreamRef.current.getTracks().forEach((track) => {
-        pc.addTrack(track, localAudioStreamRef.current!);
-      });
-    }
-
-    pc.ontrack = (event) => {
-      const remoteStream = event.streams[0] || new MediaStream([event.track]);
-      setRemoteUsers((prev) => ({
-        ...prev,
-        [remoteNickname]: {
-          stream: remoteStream,
-          isMuted: prev[remoteNickname]?.isMuted ?? true,
-          volume: prev[remoteNickname]?.volume ?? 1.0,
-        },
-      }));
-    };
-
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        stompClient?.publish({
-          destination: `/pub/party/${partyId}/voice`,
-          body: JSON.stringify({
-            type: "candidate",
-            candidate: event.candidate,
-            sender: user?.nickName,
-            target: remoteNickname,
-          }),
-        });
-      }
-    };
-
-    peerConnections.current[remoteNickname] = pc;
-    return pc;
-  };
-  createPeerConnectionRef.current = createPeerConnection;
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const stompClient = useWebSocketStore((state) => state.stompClient);
+  const isConnected = useWebSocketStore((state) => state.isConnected);
 
   const handleClickOut = () => {
-    if (isHost) {
-      // TODO: 친구 목록 불러오기
-      setShowLeaveDialog(true);
-    } else {
-      performLeave();
-    }
+    alert("click out");
   };
 
-  // vetted
-  const performLeave = async (newHostId?: string) => {
-    const selectedMember = memberList?.find((m) => m.memberId === newHostId);
-
-    console.log("performLeave called: " + newHostId);
-    hasLeftManually.current = true;
-    if (stompClient?.connected) {
-      stompClient.publish({
-        destination: `/pub/party/${partyId}/leave`,
-        body: JSON.stringify({ targetMemberId: newHostId }),
-        headers: { Authorization: accessToken },
-      });
-    }
-
-    if (newHostId) {
-      console.log("Delegating to:", selectedMember?.memberNickname);
-      const partyData = await queryClient.fetchQuery({
-        queryKey: ["partyData", partyId],
-        queryFn: async () => {
-          const res = await apiClient.get(`/parties/${partyId}`);
-          return res.data;
-        },
-      });
-
-      console.log("New Host is:", partyData.hostNickname);
-
-      setIsDelegating(false);
-      setShowLeaveDialog(false);
-    }
-
-    console.log("performLeave end reached: " + newHostId);
-    navigate(-1);
+  const handleToggleMic = () => {
+    alert("click toggle mic");
   };
 
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isHost) {
-        e.preventDefault();
-        e.returnValue = "";
-      }
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [isHost]);
-
-  // vetted
-  const {
-    data: memberList,
-    isFetching: isFetchingMemberList,
-    refetch: fetchMemberList,
-  } = useQuery({
-    queryKey: ["memberList"],
-    queryFn: async () => {
-      const res = await apiClient.get(`/parties/${partyId}/members`);
-      return res.data;
-    },
-    enabled: false,
-  });
-
-  // vetted
-  const handleFetchMemberList = async () => {
-    await fetchMemberList();
-    setIsDelegating(true);
-  };
-
-  const sendChat = (text: string) => {
+  const handleSendChat = (text: string) => {
     if (stompClient?.connected) {
       stompClient.publish({
         destination: `/pub/party/${partyId}/talk`,
@@ -533,226 +44,107 @@ const PartyRoomPage = () => {
     }
   };
 
-  const handleVideoEvent = (action: "PLAY" | "PAUSE" | "SEEK") => {
-    if (
-      !videoRef.current ||
-      isProcessingSync.current ||
-      !stompClient?.connected
-    )
-      return;
+  const queryClient = useQueryClient();
+  const { data: partyData, isPending: isPendingPartyData } =
+    useRequestPartyData(partyId, location.state?.partyData);
 
-    if (isHostControl && !isHost) return;
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const isProcessingSync = useRef(false);
 
-    const state: VideoState = {
-      currentTime: videoRef.current.currentTime,
-      paused: videoRef.current.paused,
-      action: action,
-    };
+  const [isChatMinimized, setIsChatMinimized] = useState(false);
+  const [isMicActive, setisMicActive] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatStompMessage[]>([]);
+  const [stompMessageMemberCount, setStompMessageMemberCount] = useState<
+    number | null
+  >(null);
 
-    // Only send if allowed
-    if (!isHostControl || isHost) {
-      stompClient?.publish({
-        destination: `/pub/party/${partyId}/video`,
-        body: JSON.stringify(state),
-        headers: {
-          Authorization: accessToken?.startsWith("Bearer ")
-            ? accessToken
-            : `Bearer ${accessToken}`,
-        },
-      });
-    } else if (!isHostControl) {
-      // everyone can control
-      stompClient?.publish({
-        destination: `/pub/party/${partyId}/video`,
-        body: JSON.stringify(state),
-        headers: {
-          Authorization: accessToken?.startsWith("Bearer ")
-            ? accessToken
-            : `Bearer ${accessToken}`,
-        },
-      });
-    }
-  };
+  const isHost =
+    partyData && user
+      ? String(partyData.hostNickname) === String(user.nickName)
+      : false;
+  // TODO: CHECK IF isHostRef is necessary
+  const isHostRef = useRef(isHost);
+  useEffect(() => {
+    isHostRef.current =
+      partyData && user
+        ? String(partyData.hostNickname) === String(user.nickName)
+        : false;
+  }, [partyData, user]);
+  const currentMemberCount =
+    stompMessageMemberCount ?? partyData?.currentMemberCount ?? 0;
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    if (!stompClient || !isConnected || !partyId) return;
 
-    const onSeeking = () => {
-      isUserSeeking.current = true;
-    };
+    // TODO: check what this does
+    const partySub = stompClient.subscribe(
+      `/sub/party/${partyId}`,
+      async (stompMessage) => {
+        const messageContent = JSON.parse(stompMessage.body);
 
-    const onSeeked = () => {
-      handleVideoEvent("SEEK");
-      setTimeout(() => {
-        isUserSeeking.current = false;
-      }, 100);
-    };
+        if (messageContent.messageType === "LEAVE") {
+          queryClient.invalidateQueries({
+            queryKey: ["partyData", partyId],
+          });
+        }
 
-    const onPlay = () => {
-      if (!isUserSeeking.current) {
-        handleVideoEvent("PLAY");
-      }
-    };
+        if (messageContent.currentCount !== undefined)
+          setStompMessageMemberCount(messageContent.currentCount);
+        setChatMessages((prev) => [...prev, messageContent]);
+      },
+    );
 
-    const onPause = () => {
-      if (!video.seeking && !isUserSeeking.current) {
-        handleVideoEvent("PAUSE");
-      }
-    };
+    // 2. Subscribe to Voice Chat
 
-    video.addEventListener("seeking", onSeeking);
-    video.addEventListener("seeked", onSeeked);
-    video.addEventListener("play", onPlay);
-    video.addEventListener("pause", onPause);
+    // 3. Subscribe to Video Sync
+
+    // TODO: check what this does
+    stompClient.publish({
+      destination: `/pub/party/${partyId}/enter`,
+      headers: {
+        Authorization: accessToken?.startsWith("Bearer ")
+          ? accessToken
+          : `Bearer ${accessToken}`,
+      },
+    });
 
     return () => {
-      video.removeEventListener("seeking", onSeeking);
-      video.removeEventListener("seeked", onSeeked);
-      video.removeEventListener("play", onPlay);
-      video.removeEventListener("pause", onPause);
+      partySub.unsubscribe();
     };
-  }, [isHostControl, isHost, stompClient]);
-
-  const displayCount = liveCount ?? partyData?.currentMemberCount ?? 0;
-
-  // Place this right before your main return
-  if (isPendingPartyData && !partyData) {
-    return (
-      <div className="h-screen w-full bg-black flex flex-col items-center justify-center text-white gap-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#816BFF]"></div>
-        <p className="animate-pulse text-zinc-400">
-          파티룸 정보를 가져오는 중...
-        </p>
-      </div>
-    );
-  }
-
-  // Second safety guard: if data fails to load or doesn't exist
-  if (!partyData) {
-    return (
-      <div className="h-screen w-full bg-black flex items-center justify-center text-white">
-        <p>파티를 찾을 수 없습니다.</p>
-        <button onClick={() => navigate(-1)} className="ml-4 underline">
-          돌아가기
-        </button>
-      </div>
-    );
-  }
-
-  const onToggleVoice = async () => {
-    try {
-      // 1. If no stream exists, start it
-      if (!localAudioStreamRef.current) {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-        });
-        localAudioStreamRef.current = stream;
-
-        // Ensure the track is ON when first started
-        stream.getAudioTracks()[0].enabled = true;
-        setIsVoiceActive(true);
-
-        // Attach to any existing peer connections
-        Object.values(peerConnections.current).forEach((pc) => {
-          stream.getTracks().forEach((track) => {
-            pc.addTrack(track, stream);
-          });
-        });
-
-        return; // Exit after initializing
-      }
-
-      // 2. If stream exists, toggle the 'enabled' property
-      const audioTrack = localAudioStreamRef.current.getAudioTracks()[0];
-      if (audioTrack) {
-        const nextState = !audioTrack.enabled;
-        audioTrack.enabled = nextState; // This is the actual "Mute/Unmute" line
-        setIsVoiceActive(nextState);
-
-        stompClient?.publish({
-          destination: `/pub/party/${partyId}/voice`,
-          body: JSON.stringify({
-            type: "mute-status",
-            sender: user?.nickName,
-            isMuted: !nextState,
-          }),
-        });
-      }
-    } catch (err) {
-      console.error("Mic toggle error:", err);
-      // Optional: Alert the user if they blocked the mic
-      setIsVoiceActive(false);
-    }
-  };
+  }, [stompClient, isConnected, partyId, user]);
 
   return (
     <div className="flex h-screen relative">
       {/* Video */}
-      <div className="flex-1 flex items-center justify-center bg-black text-white transition-all duration-300">
-        <div className="absolute top-4 left-4 z-10  px-3 py-1 ">
-          <div className="flex items-center gap-1">
-            <ArrowLeft
-              size={20}
-              className="cursor-pointer top-4 left-4 z-10 hover:scale-120 transition-transform stroke-3"
-              onClick={handleClickOut}
-            />
-            <span className="pointer-events-none">{partyData.movieTitle}</span>
-          </div>
-        </div>
-        <video
-          ref={videoRef}
-          src="https://joinflix-s3-bucket.s3.ap-northeast-2.amazonaws.com/videos/steamboat-willie_1928.mp4"
-          className="object-contain w-full h-full max-h-screen max-w-screen"
-          controls={!isHostControl || isHost}
+      <VideoPlayer
+        videoRef={videoRef}
+        partyData={partyData}
+        isHost={isHost}
+        onClickBack={handleClickOut}
+      />
+
+      {/* Floating Mic Control Over Video*/}
+      {isChatMinimized && (
+        <MicControlOverlay
+          isMicActive={isMicActive}
+          onToggleMic={handleToggleMic}
         />
-
-        {/* Floating Voice Control */}
-        {isChatMinimized && (
-          <div className="absolute top-6 right-6 z-30 flex flex-col items-center gap-2 group">
-            <button
-              onClick={onToggleVoice}
-              className={`
-              group relative flex h-7 w-7 items-center justify-center rounded-full 
-              border border-white/10 shadow-2xl transition-all duration-300 
-              hover:scale-110 active:scale-95 cursor-pointer ring-4 ring-[#816BFF]/20
-              ${isVoiceActive ? "bg-[#816BFF] text-white" : "bg-zinc-800 text-zinc-500"}
-            `}
-            >
-              {isVoiceActive && (
-                <div className="absolute inset-0 rounded-full animate-ping bg-[#816BFF]/40" />
-              )}
-
-              {isVoiceActive ? (
-                <Mic className="size-4" />
-              ) : (
-                <MicOff className="size-4" />
-              )}
-            </button>
-
-            {/* tooltip */}
-            <span className="absolute top-0.5 right-9 px-2 py-1 text-xs text-white bg-black/80 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-              {isVoiceActive ? "클릭해서 마이크 끄기" : "클릭해서 마이크 켜기"}
-            </span>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Chat */}
       <div
         className="flex flex-col h-full bg-zinc-900 transition-all duration-300"
         style={{ width: isChatMinimized ? 0 : chatWidth }}
       >
-        <ChatWindow
-          messages={messages}
-          onSendMessage={sendChat}
+        {/* TODO: change component name to ChatPanel */}
+        <ChatPanel
+          chatMessages={chatMessages}
+          onSendMessage={handleSendChat}
           partyData={partyData}
-          currentCount={displayCount}
-          isVoiceActive={isVoiceActive}
-          onToggleVoice={onToggleVoice}
-          remoteUsers={remoteUsers}
-          setRemoteUsers={setRemoteUsers}
-          localStream={localAudioStreamRef.current}
+          // TODO: check if I can get count from partyData
+          currentMemberCount={currentMemberCount}
+          isMicActive={isMicActive}
+          onToggleMic={handleToggleMic}
         />
       </div>
 
@@ -773,7 +165,7 @@ const PartyRoomPage = () => {
         )}
       </div>
       {/* Party Closed Overlay */}
-      {isPartyClosed && (
+      {/* {isPartyClosed && (
         <div className="absolute inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md">
           <div className="text-center p-8 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl">
             <h2 className="text-2xl font-bold text-white mb-2">
@@ -788,10 +180,10 @@ const PartyRoomPage = () => {
             </button>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Leave Options Modal */}
-      {showLeaveDialog && (
+      {/* {showLeaveDialog && (
         <div className="absolute inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4">
           <div className="bg-zinc-900 border border-zinc-800 w-full max-w-sm rounded-2xl p-6 shadow-2xl">
             {!isDelegating ? (
@@ -864,7 +256,7 @@ const PartyRoomPage = () => {
             )}
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 };
