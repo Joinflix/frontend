@@ -1,22 +1,20 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLocation, useParams } from "react-router";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useWebSocketStore } from "../store/useWebSocketStore";
 import { useRequestPartyData } from "../api/queries/useRequestPartyData";
 import VideoPlayer from "../components/partyroom/video/VideoPlayer";
 import MicControlOverlay from "../components/partyroom/chat/MicControlOverlay";
 import ChatPanel from "../components/partyroom/chat/ChatPanel";
-import type { ChatStompMessage } from "../types/chat";
+
 import { useVideoSync } from "../hooks/useVideoSync";
+import { usePartyChat } from "../hooks/usePartyChat";
 
 const chatWidth = 336;
 const chevronStyle = "stroke-zinc-600 stroke-5";
 
 const PartyRoomPage = () => {
-  const queryClient = useQueryClient();
-
   const { partyId } = useParams();
   const location = useLocation();
 
@@ -33,26 +31,8 @@ const PartyRoomPage = () => {
     alert("click toggle mic");
   };
 
-  const handleSendChat = (text: string) => {
-    if (stompClient?.connected) {
-      stompClient.publish({
-        destination: `/pub/party/${partyId}/talk`,
-        headers: {
-          Authorization: accessToken?.startsWith("Bearer ")
-            ? accessToken
-            : `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ message: text }),
-      });
-    }
-  };
-
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isChatMinimized, setIsChatMinimized] = useState(false);
-  const [chatMessages, setChatMessages] = useState<ChatStompMessage[]>([]);
-  const [stompMessageMemberCount, setStompMessageMemberCount] = useState<
-    number | null
-  >(null);
 
   const numericPartyId = partyId ? Number(partyId) : undefined;
   const { data: partyData } = useRequestPartyData(
@@ -64,6 +44,20 @@ const PartyRoomPage = () => {
       ? String(partyData.hostNickname) === String(user.nickname)
       : false;
 
+  const [isMicActive, setisMicActive] = useState(false);
+
+  // 1. 파티 연결 및 텍스트 채팅
+  const { chatMessages, memberCount, sendChat, setChatMessages } = usePartyChat(
+    {
+      partyId,
+      stompClient,
+      isConnected,
+      accessToken,
+    },
+  );
+  const currentMemberCount = memberCount ?? partyData?.currentMemberCount ?? 0;
+
+  // 2. 비디오 동기화
   useVideoSync({
     partyId,
     videoRef,
@@ -76,51 +70,7 @@ const PartyRoomPage = () => {
     user,
   });
 
-  const [isMicActive, setisMicActive] = useState(false);
-
-  const currentMemberCount =
-    stompMessageMemberCount ?? partyData?.currentMemberCount ?? 0;
-
-  // SUBSCRIPTION
-  useEffect(() => {
-    if (!stompClient || !isConnected || !partyId) return;
-
-    // 1. 텍스트 채팅 구독 (Subscribe to Text Chat)
-    const textChatSub = stompClient.subscribe(
-      `/sub/party/${partyId}`,
-      async (stompMessage) => {
-        const messageContent = JSON.parse(stompMessage.body);
-
-        if (messageContent.messageType === "LEAVE") {
-          queryClient.invalidateQueries({
-            queryKey: ["partyData", partyId],
-          });
-        }
-
-        if (messageContent.currentCount !== undefined)
-          setStompMessageMemberCount(messageContent.currentCount);
-        setChatMessages((prev) => [...prev, messageContent]);
-      },
-    );
-
-    // 1.1. 입장 신호: Text Chat subscription 직후 1회, ENTER signal publish
-    stompClient.publish({
-      destination: `/pub/party/${partyId}/enter`,
-      headers: {
-        Authorization: accessToken?.startsWith("Bearer ")
-          ? accessToken
-          : `Bearer ${accessToken}`,
-      },
-    });
-
-    // 2. 비디오 동기화 구독 (Subscribe to Video Sync)
-
-    // 3. Subscribe to Voice Chat
-
-    return () => {
-      textChatSub.unsubscribe();
-    };
-  }, [stompClient, isConnected, partyId, user]);
+  // 3. Subscribe to Voice Chat
 
   return (
     <div className="flex h-screen relative">
@@ -145,10 +95,9 @@ const PartyRoomPage = () => {
         className="flex flex-col h-full bg-zinc-900 transition-all duration-300"
         style={{ width: isChatMinimized ? 0 : chatWidth }}
       >
-        {/* TODO: change component name to ChatPanel */}
         <ChatPanel
           chatMessages={chatMessages}
-          onSendMessage={handleSendChat}
+          onSendMessage={sendChat}
           partyData={partyData}
           // TODO: check if I can get count from partyData
           currentMemberCount={currentMemberCount}
