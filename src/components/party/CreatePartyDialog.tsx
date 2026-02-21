@@ -31,6 +31,25 @@ import {
 import { SendingInvitation } from "./SendingInvitation";
 import { AnimatedGradientText } from "../ui/animated-gradient-text";
 
+// TODO: Check if partyType is necessary (BE에는 없는 필드임)
+// PartyRoomRequest(BE)
+interface CreatePartyPayload {
+  movieId: number;
+  roomName: string;
+  isPublic: boolean;
+  hostControl: boolean;
+  passCode: string | null | undefined;
+  invitedUserIds: number[];
+  partyType: PartyType;
+}
+
+//FriendResponse(BE)
+interface Friend {
+  userId: number;
+  nickname: string;
+  email: string;
+}
+
 type CreatePartyDialogProps = {
   partyOpen: boolean;
   setPartyOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -85,7 +104,7 @@ const CreatePartyDialog = ({
       passCode,
     }: {
       partyId: number;
-      passCode?: string;
+      passCode?: string | null | undefined;
     }) => {
       const res = await apiClient.post(`/parties/${partyId}/join`, {
         passCode,
@@ -97,7 +116,7 @@ const CreatePartyDialog = ({
       setTimeout(() => {
         setPartyOpen(false);
         navigate(`/watch/party/${data.id}`, {
-          state: { partyData: data },
+          state: { partyRoomData: data },
         });
       }, 1000);
     },
@@ -111,7 +130,7 @@ const CreatePartyDialog = ({
     isPending: createPartyIsPending,
     isSuccess: createPartyIsSuccess,
   } = useMutation({
-    mutationFn: async (payload) => {
+    mutationFn: async (payload: CreatePartyPayload) => {
       const res = await apiClient.post<number>("/parties", payload);
       return res.data;
     },
@@ -128,13 +147,13 @@ const CreatePartyDialog = ({
 
     if (!isPrivate) {
       const payload = {
-        roomName: data.name,
-        passCode: null,
-        isPublic: true,
-        partyType,
         movieId,
+        roomName: data.name,
+        isPublic: true,
         hostControl: false,
+        passCode: null,
         invitedUserIds: [],
+        partyType,
       };
       createParty(payload);
       return;
@@ -151,7 +170,7 @@ const CreatePartyDialog = ({
     );
   };
 
-  const { data: friends, isPending } = useQuery({
+  const { data: friends } = useQuery({
     queryKey: ["friends"],
     queryFn: async () => {
       const res = await apiClient.get(`/friends`);
@@ -160,19 +179,21 @@ const CreatePartyDialog = ({
   });
 
   const selectedFriendObjects =
-    friends?.filter((friend) => selectedFriends.includes(friend.userId)) ?? [];
+    friends?.filter((friend: Friend) =>
+      selectedFriends.includes(friend.userId),
+    ) ?? [];
 
   const handleClickStartPrivateParty = () => {
     if (!pendingPrivateData) return;
 
     const payload = {
-      roomName: pendingPrivateData.name,
-      passCode: pendingPrivateData.password,
-      isPublic: false,
-      partyType,
       movieId,
+      roomName: pendingPrivateData.name,
+      isPublic: false,
       hostControl: !!pendingPrivateData.hostControl,
+      passCode: pendingPrivateData.password,
       invitedUserIds: selectedFriends,
+      partyType,
     };
 
     createParty(payload);
@@ -255,7 +276,7 @@ const CreatePartyDialog = ({
             </div>
 
             <div className="min-h-[200px] max-h-[300px] grid grid-cols-1 md:grid-cols-2 md:gap-x-20 items-center justify-center overflow-auto">
-              {friends.map((friend) => {
+              {friends.map((friend: Friend) => {
                 const isSelected = selectedFriends.includes(friend.userId);
 
                 return (
@@ -269,7 +290,7 @@ const CreatePartyDialog = ({
                     }
                   >
                     <div className="flex gap-3 items-center min-w-0">
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         {profileImageUrl ? (
                           <img
                             src={profileImageUrl}
@@ -291,7 +312,7 @@ const CreatePartyDialog = ({
                       </div>
                     </div>
                     <button
-                      className={`flex-shrink-0 flex items-center gap-1 px-2 py-1.5 rounded-sm text-[11px] font-bold transition-all duration-300 border backdrop-blur-md active:scale-95
+                      className={`shrink-0 flex items-center gap-1 px-2 py-1.5 rounded-sm text-[11px] font-bold transition-all duration-300 border backdrop-blur-md active:scale-95
                   ${
                     isSelected
                       ? "bg-[#816BFF] border-[#816BFF] text-white"
@@ -321,7 +342,7 @@ const CreatePartyDialog = ({
                 <span className="text-sm mx-2">
                   {selectedFriendObjects.length}명
                 </span>
-                {selectedFriendObjects.map((friend) => (
+                {selectedFriendObjects.map((friend: Friend) => (
                   <div
                     key={friend.userId}
                     className={`px-2 py-1 bg-[#816BFF]/20 border border-[#816BFF] text-xs rounded-full text-white flex items-center gap-0.5 ${createPartyIsPending || joinPartyIsPending ? "cursor-none" : "cursor-pointer"}`}
