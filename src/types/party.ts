@@ -5,10 +5,11 @@ export interface VideoStatus {
   paused: boolean;
 }
 
-export interface VideoState {
+export interface VideoSyncMessage {
   currentTime: number;
   paused: boolean;
   action: "PLAY" | "PAUSE" | "SEEK";
+  senderId: number;
 }
 
 export interface PartyData {
@@ -20,4 +21,5 @@ export interface PartyData {
   hostNickname: string;
   currentMemberCount: number;
   videoStatus?: VideoStatus;
+  hostControl: boolean;
 }

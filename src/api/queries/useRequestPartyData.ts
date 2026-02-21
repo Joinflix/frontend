@@ -3,7 +3,7 @@ import apiClient from "../axios";
 import type { PartyData } from "../../types/party";
 
 export const useRequestPartyData = (
-  partyId: number,
+  partyId: number | undefined,
   initialData: PartyData,
 ) => {
   return useQuery({
@@ -12,7 +12,7 @@ export const useRequestPartyData = (
       const res = await apiClient.get(`/parties/${partyId}`);
       return res.data;
     },
-    enabled: !!partyId,
+    enabled: !!partyId && !isNaN(partyId),
     initialData: initialData,
   });
 };

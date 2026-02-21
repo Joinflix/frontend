@@ -9,11 +9,14 @@ import VideoPlayer from "../components/partyroom/video/VideoPlayer";
 import MicControlOverlay from "../components/partyroom/chat/MicControlOverlay";
 import ChatPanel from "../components/partyroom/chat/ChatPanel";
 import type { ChatStompMessage } from "../types/chat";
+import { useVideoSync } from "../hooks/useVideoSync";
 
 const chatWidth = 336;
 const chevronStyle = "stroke-zinc-600 stroke-5";
 
 const PartyRoomPage = () => {
+  const queryClient = useQueryClient();
+
   const { partyId } = useParams();
   const location = useLocation();
 
@@ -44,40 +47,46 @@ const PartyRoomPage = () => {
     }
   };
 
-  const queryClient = useQueryClient();
-  const { data: partyData, isPending: isPendingPartyData } =
-    useRequestPartyData(partyId, location.state?.partyData);
-
   const videoRef = useRef<HTMLVideoElement>(null);
-  const isProcessingSync = useRef(false);
-
   const [isChatMinimized, setIsChatMinimized] = useState(false);
-  const [isMicActive, setisMicActive] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatStompMessage[]>([]);
   const [stompMessageMemberCount, setStompMessageMemberCount] = useState<
     number | null
   >(null);
 
+  const numericPartyId = partyId ? Number(partyId) : undefined;
+  const { data: partyData } = useRequestPartyData(
+    numericPartyId,
+    location.state?.partyData,
+  );
   const isHost =
     partyData && user
-      ? String(partyData.hostNickname) === String(user.nickName)
+      ? String(partyData.hostNickname) === String(user.nickname)
       : false;
-  // TODO: CHECK IF isHostRef is necessary
-  const isHostRef = useRef(isHost);
-  useEffect(() => {
-    isHostRef.current =
-      partyData && user
-        ? String(partyData.hostNickname) === String(user.nickName)
-        : false;
-  }, [partyData, user]);
+
+  useVideoSync({
+    partyId,
+    videoRef,
+    stompClient,
+    isConnected,
+    isHost,
+    hostControl: partyData?.hostControl ?? true,
+    accessToken,
+    setChatMessages,
+    user,
+  });
+
+  const [isMicActive, setisMicActive] = useState(false);
+
   const currentMemberCount =
     stompMessageMemberCount ?? partyData?.currentMemberCount ?? 0;
 
+  // SUBSCRIPTION
   useEffect(() => {
     if (!stompClient || !isConnected || !partyId) return;
 
-    // TODO: check what this does
-    const partySub = stompClient.subscribe(
+    // 1. 텍스트 채팅 구독 (Subscribe to Text Chat)
+    const textChatSub = stompClient.subscribe(
       `/sub/party/${partyId}`,
       async (stompMessage) => {
         const messageContent = JSON.parse(stompMessage.body);
@@ -94,11 +103,7 @@ const PartyRoomPage = () => {
       },
     );
 
-    // 2. Subscribe to Voice Chat
-
-    // 3. Subscribe to Video Sync
-
-    // TODO: check what this does
+    // 1.1. 입장 신호: Text Chat subscription 직후 1회, ENTER signal publish
     stompClient.publish({
       destination: `/pub/party/${partyId}/enter`,
       headers: {
@@ -108,8 +113,12 @@ const PartyRoomPage = () => {
       },
     });
 
+    // 2. 비디오 동기화 구독 (Subscribe to Video Sync)
+
+    // 3. Subscribe to Voice Chat
+
     return () => {
-      partySub.unsubscribe();
+      textChatSub.unsubscribe();
     };
   }, [stompClient, isConnected, partyId, user]);
 
@@ -148,12 +157,11 @@ const PartyRoomPage = () => {
         />
       </div>
 
-      {/* Handle */}
+      {/* Chat Panel Handle */}
       <div
         className="absolute top-1/2 transform -translate-y-1/2 w-8 h-15 flex items-center justify-center rounded-l-lg cursor-pointer bg-zinc-900 z-20"
         onClick={() => setIsChatMinimized((prev) => !prev)}
         style={{
-          // Move handle: right edge of chat if expanded, right screen edge if minimized
           right: isChatMinimized ? 0 : chatWidth,
           transition: "right 0.3s",
         }}

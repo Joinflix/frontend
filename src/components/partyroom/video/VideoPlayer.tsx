@@ -31,10 +31,10 @@ const VideoPlayer = ({
 
       <video
         ref={videoRef}
-        //TODO: partyData에서 아래 주소 가져오기
+        //TODO: DB에 각 영상 주소 저장 후 partyData에서 동적으로 주소 가져오기
         src="https://joinflix-s3-bucket.s3.ap-northeast-2.amazonaws.com/videos/steamboat-willie_1928.mp4"
         className="object-contain w-full h-full max-h-screen max-w-screen"
-        controls={isHost}
+        controls={isHost || !partyData.hostControl}
       />
     </div>
   );
