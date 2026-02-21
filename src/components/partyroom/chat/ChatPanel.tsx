@@ -50,15 +50,15 @@ const ChatPanel = ({
   const userColorMap = new Map<string, string>();
   let colorIndex = 0;
 
-  const getUsernameColor = (sender: string) => {
-    if (!sender) return USER_COLORS[0];
+  const getUsernameColor = (senderNickname: string) => {
+    if (!senderNickname) return USER_COLORS[0];
 
-    if (!userColorMap.has(sender)) {
-      userColorMap.set(sender, USER_COLORS[colorIndex]);
+    if (!userColorMap.has(senderNickname)) {
+      userColorMap.set(senderNickname, USER_COLORS[colorIndex]);
       colorIndex = (colorIndex + 1) % USER_COLORS.length;
     }
 
-    return userColorMap.get(sender)!;
+    return userColorMap.get(senderNickname)!;
   };
 
   return (
@@ -200,7 +200,7 @@ const ChatPanel = ({
           }
 
           // 채팅 메시지
-          const colorClass = getUsernameColor(msg.sender);
+          const colorClass = getUsernameColor(msg.senderNickname);
 
           return (
             <div
@@ -208,7 +208,7 @@ const ChatPanel = ({
               className={`w-full max-w-full px-4 rounded-sm self-start ${colorClass} text-base font-light`}
             >
               <div className="inline-block text-lg font-extrabold">
-                {msg.sender}
+                {msg.senderNickname}
               </div>
               <span className="break-all ml-3">{msg.message}</span>
             </div>

@@ -1,6 +1,7 @@
 export interface ChatStompMessage {
   messageType: "TALK" | "ENTER" | "LEAVE" | "SYSTEM";
-  sender: string;
+  senderNickname: string;
   message: string;
   currentCount?: number;
+  senderId?: number;
 }
