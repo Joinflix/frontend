@@ -173,7 +173,7 @@ export const useVideoSync = ({
       video.removeEventListener("pause", onPause);
     };
 
-    // partyData.hostControl이나 isHost 상태가 변할 때마다 리스너를 새로 등록/해제함
+    // partyRoomData.hostControl이나 isHost 상태가 변할 때마다 리스너를 새로 등록/해제함
     // TODO: 파티룸 내에서 HostControl 변경 가능 여부 확인
   }, [hostControl, isHost, stompClient]);
 

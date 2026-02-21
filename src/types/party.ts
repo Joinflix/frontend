@@ -15,7 +15,7 @@ export interface VideoSyncMessage {
 }
 
 //PartyRoomResponse(BE)
-export interface PartyData {
+export interface PartyRoomData {
   id: number;
   movieTitle: string;
   backdrop: string;
@@ -25,4 +25,5 @@ export interface PartyData {
   currentMemberCount: number;
   videoStatus?: VideoStatus;
   hostControl: boolean;
+  hostId: number;
 }

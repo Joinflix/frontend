@@ -32,7 +32,9 @@ export const usePartyChat = ({
 
         // 퇴장 메시지 시 파티 데이터 갱신
         if (messageContent.messageType === "LEAVE") {
-          queryClient.invalidateQueries({ queryKey: ["partyData", partyId] });
+          queryClient.invalidateQueries({
+            queryKey: ["partyRoomData", partyId],
+          });
         }
 
         if (messageContent.currentCount !== undefined) {

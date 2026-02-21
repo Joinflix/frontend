@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../axios";
-import type { PartyData } from "../../types/party";
+import type { PartyRoomData } from "../../types/party";
 
-export const useRequestPartyData = (
+export const useRequestPartyRoomData = (
   partyId: number | undefined,
-  initialData: PartyData,
+  initialData: PartyRoomData,
 ) => {
   return useQuery({
-    queryKey: ["partyData", partyId],
+    queryKey: ["partyRoomData", partyId],
     queryFn: async () => {
       const res = await apiClient.get(`/parties/${partyId}`);
       return res.data;
