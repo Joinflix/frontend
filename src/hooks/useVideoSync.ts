@@ -5,7 +5,7 @@ import type { ChatStompMessage } from "../types/chat";
 import type { User } from "../store/useAuthStore";
 
 interface UseVideoSyncProps {
-  partyId: string | undefined;
+  partyId: number | undefined;
   videoRef: React.RefObject<HTMLVideoElement | null>;
   stompClient: Client | null;
   isConnected: boolean;
@@ -92,7 +92,7 @@ export const useVideoSync = ({
             ...prev,
             {
               messageType: "SYSTEM",
-              sender: senderNickname || "System",
+              senderNickname: senderNickname || "System",
               message,
             },
           ]);

@@ -5,7 +5,7 @@ import type { ChatStompMessage } from "../types/chat";
 import type { Client, IMessage } from "@stomp/stompjs";
 
 interface UsePartyChatProps {
-  partyId: string | undefined;
+  partyId: number | undefined;
   stompClient: Client | null;
   isConnected: boolean;
   accessToken: string | null;

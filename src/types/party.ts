@@ -1,17 +1,20 @@
 export type PartyType = "PUBLIC" | "PRIVATE";
 
+//VideoStatus(BE)
 export interface VideoStatus {
   currentTime: number;
   paused: boolean;
 }
 
+//VideoSyncRequest(BE)
 export interface VideoSyncMessage {
   currentTime: number;
   paused: boolean;
   action: "PLAY" | "PAUSE" | "SEEK";
-  senderId: number;
+  senderId: number | undefined;
 }
 
+//PartyRoomResponse(BE)
 export interface PartyData {
   id: number;
   movieTitle: string;
