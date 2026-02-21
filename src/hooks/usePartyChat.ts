@@ -9,6 +9,7 @@ interface UsePartyChatProps {
   stompClient: Client | null;
   isConnected: boolean;
   accessToken: string | null;
+  onPartyClosed: () => void;
 }
 
 export const usePartyChat = ({
@@ -16,6 +17,7 @@ export const usePartyChat = ({
   stompClient,
   isConnected,
   accessToken,
+  onPartyClosed,
 }: UsePartyChatProps) => {
   const queryClient = useQueryClient();
   const [chatMessages, setChatMessages] = useState<ChatStompMessage[]>([]);
@@ -30,11 +32,16 @@ export const usePartyChat = ({
       (stompMessage: IMessage) => {
         const messageContent = JSON.parse(stompMessage.body);
 
-        // 퇴장 메시지 시 파티 데이터 갱신
+        // 퇴장 발생 시 파티 데이터 갱신
         if (messageContent.messageType === "LEAVE") {
           queryClient.invalidateQueries({
             queryKey: ["partyRoomData", partyId],
           });
+
+          if (messageContent.currentCount === 0) {
+            // 만약 이 메시지를 받은 사용자가 아직 방에 있다면 (에러 상황 대비)
+            onPartyClosed();
+          }
         }
 
         if (messageContent.currentCount !== undefined) {
