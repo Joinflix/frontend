@@ -1,11 +1,11 @@
 import { ChevronDown, ChevronUp, Crown, Mic, MicOff, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { PartyData } from "../../../types/party";
+import type { PartyRoomData } from "../../../types/party";
 import type { ChatStompMessage } from "../../../types/chat";
 
 interface ChatWindowProps {
   // GENERAL
-  partyData: PartyData;
+  partyRoomData: PartyRoomData;
   currentMemberCount: number;
   // TEXT CHAT
   chatMessages: ChatStompMessage[];
@@ -20,11 +20,17 @@ const USER_COLORS = [
   "text-green-400",
   "text-amber-400",
   "text-orange-400",
+  "text-rose-400",
+  "text-purple-400",
+  "text-cyan-400",
+  "text-lime-400",
+  "text-indigo-400",
+  "text-pink-400",
 ];
 
 const ChatPanel = ({
   // GENERAL
-  partyData,
+  partyRoomData,
   currentMemberCount,
   // TEXT CHAT
   chatMessages,
@@ -47,18 +53,19 @@ const ChatPanel = ({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
 
-  const userColorMap = new Map<string, string>();
-  let colorIndex = 0;
+  // 닉네임을 기반으로 고유한 색상 클래스를 반환하는 함수
+  const getUsernameColor = (nickname: string) => {
+    if (!nickname) return USER_COLORS[0];
 
-  const getUsernameColor = (senderNickname: string) => {
-    if (!senderNickname) return USER_COLORS[0];
-
-    if (!userColorMap.has(senderNickname)) {
-      userColorMap.set(senderNickname, USER_COLORS[colorIndex]);
-      colorIndex = (colorIndex + 1) % USER_COLORS.length;
+    // 1. 문자열을 숫자로 변환 (Hash)
+    let hash = 0;
+    for (let i = 0; i < nickname.length; i++) {
+      hash = nickname.charCodeAt(i) + ((hash << 5) - hash);
     }
 
-    return userColorMap.get(senderNickname)!;
+    // 2. 숫자를 색상 배열의 길이로 나눈 나머지값으로 인덱스 결정
+    const index = Math.abs(hash) % USER_COLORS.length;
+    return USER_COLORS[index];
   };
 
   return (
@@ -68,7 +75,7 @@ const ChatPanel = ({
         <div className="flex flex-col pt-3">
           {/* 파티룸 이름, 영화 제목 */}
           <div className="text-center text-white text-base">
-            {partyData?.roomName}
+            {partyRoomData?.roomName}
           </div>
           {/* 참여 인원 */}
           <div className="flex flex-row text-white/70 items-center justify-center gap-1">
@@ -84,7 +91,7 @@ const ChatPanel = ({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-white font-medium truncate">
-                  {partyData?.hostNickname}
+                  {partyRoomData?.hostNickname}
                 </p>
                 <p className="text-[10px] text-zinc-500">Party Host</p>
               </div>
@@ -249,7 +256,7 @@ const ChatPanel = ({
             placeholder="채팅하기"
             className="w-full pr-3 py-2 rounded-l-none rounded-r-full bg-zinc-800 text-white text-sm placeholder:text-zinc-500 focus:outline-none"
             onKeyDown={(e) => {
-              const nativeEvent = e.nativeEvent as any;
+              const nativeEvent = e.nativeEvent as KeyboardEvent;
               if (nativeEvent.isComposing) return;
               if (e.key === "Enter") {
                 e.preventDefault();
