@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +18,7 @@ interface ProfileDropdownProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   iconStyle: string;
-  initial: string;
+  initial: string | undefined;
 }
 
 export const ProfileDropdown = ({
