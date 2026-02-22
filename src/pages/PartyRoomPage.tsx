@@ -109,6 +109,7 @@ const PartyRoomPage = () => {
     partyId: numericPartyId,
     stompClient,
     user,
+    isMicActive,
   });
 
   // 4. 파티 퇴장

@@ -6,6 +6,7 @@ interface useWebRTCProps {
   partyId: number | undefined;
   stompClient: Client | null;
   user: User | null;
+  isMicActive: boolean;
 }
 
 //IceCandidateRequest(BE)
@@ -27,7 +28,12 @@ interface voiceSignalPayload {
   isMuted: boolean;
 }
 
-export const useWebRTC = ({ partyId, stompClient, user }: useWebRTCProps) => {
+export const useWebRTC = ({
+  partyId,
+  stompClient,
+  user,
+  isMicActive,
+}: useWebRTCProps) => {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
 
@@ -82,6 +88,11 @@ export const useWebRTC = ({ partyId, stompClient, user }: useWebRTCProps) => {
           audio: true,
           video: false,
         });
+
+        stream.getAudioTracks().forEach((track) => {
+          track.enabled = false;
+        });
+
         setLocalStream(stream);
       } catch (e) {
         console.error("Mic Access Denied", e);
@@ -182,7 +193,7 @@ export const useWebRTC = ({ partyId, stompClient, user }: useWebRTCProps) => {
         senderId: user?.userId,
         senderNickname: user?.nickname,
         targetId: payload.senderId,
-        isMuted: false,
+        isMuted: !isMicActive,
       }),
     });
   };
@@ -215,7 +226,7 @@ export const useWebRTC = ({ partyId, stompClient, user }: useWebRTCProps) => {
         sdp: answer.sdp,
         senderId: user?.userId,
         targetId: payload.senderId,
-        isMuted: false,
+        isMuted: !isMicActive,
       }),
     });
   };
@@ -265,7 +276,7 @@ export const useWebRTC = ({ partyId, stompClient, user }: useWebRTCProps) => {
         type: "JOIN",
         senderId: user.userId as number,
         senderNickname: user.nickname as string,
-        isMuted: false,
+        isMuted: !isMicActive,
       };
 
       stompClient.publish({
@@ -283,7 +294,7 @@ export const useWebRTC = ({ partyId, stompClient, user }: useWebRTCProps) => {
             senderId: remoteId,
             senderNickname: "WaitingUser",
             type: "JOIN",
-            isMuted: false,
+            isMuted: !isMicActive,
           });
         }
       }
@@ -320,18 +331,34 @@ export const useWebRTC = ({ partyId, stompClient, user }: useWebRTCProps) => {
 
         switch (messageContent.type) {
           case "JOIN":
-            // I am an existing user, someone new just joined. I will OFFER.
+            // Update the status of the person who just joined immediately
+            setMuteStatuses((prev) => ({
+              ...prev,
+              [messageContent.senderId]: messageContent.isMuted,
+            }));
             handleJoin(messageContent);
             break;
           case "OFFER":
             // I am the newcomer, someone is offering me their stream.
-            if (messageContent.targetId === user.userId)
+            // Update the status of the person offering to you
+            if (messageContent.targetId === user.userId) {
+              setMuteStatuses((prev) => ({
+                ...prev,
+                [messageContent.senderId]: messageContent.isMuted,
+              }));
               handleOffer(messageContent);
+            }
             break;
           case "ANSWER":
             // Someone accepted my offer.
-            if (messageContent.targetId === user.userId)
+            if (messageContent.targetId === user.userId) {
+              // Update the status of the person answering you
+              setMuteStatuses((prev) => ({
+                ...prev,
+                [messageContent.senderId]: messageContent.isMuted,
+              }));
               handleAnswer(messageContent);
+            }
             break;
           case "ICE":
             // Exchanging network info.
