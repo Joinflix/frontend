@@ -1,10 +1,21 @@
-import { ChevronDown, ChevronUp, Crown, Mic, MicOff, User } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Crown,
+  Mic,
+  MicOff,
+  User as UserIcon,
+  Volume2,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { PartyRoomData } from "../../../types/party";
 import type { ChatStompMessage } from "../../../types/chat";
+import RemoteAudio from "./RemoteAudio";
+import type { User } from "../store/useAuthStore";
 
 interface ChatWindowProps {
   // GENERAL
+  user: User | null;
   partyRoomData: PartyRoomData;
   currentMemberCount: number;
   // TEXT CHAT
@@ -13,6 +24,8 @@ interface ChatWindowProps {
   // VOICE CHAT
   isMicActive: boolean;
   onToggleMic: () => void;
+  remoteStreams: { [userId: number]: MediaStream };
+  muteStatuses: { [userId: number]: boolean };
 }
 
 const USER_COLORS = [
@@ -30,6 +43,7 @@ const USER_COLORS = [
 
 const ChatPanel = ({
   // GENERAL
+  user,
   partyRoomData,
   currentMemberCount,
   // TEXT CHAT
@@ -38,10 +52,25 @@ const ChatPanel = ({
   // VOICE CHAT
   isMicActive,
   onToggleMic,
+  remoteStreams,
+  muteStatuses,
 }: ChatWindowProps) => {
+  console.log("Count of streams:", Object.keys(remoteStreams).length);
+
   const [message, setMessage] = useState("");
   const [isVoiceControlOpen, setIsVoiceControlOpen] = useState(true);
+  const [volumes, setVolumes] = useState<{ [userId: number]: number }>({});
   const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  // Initialize volume for new streams if not already set
+  useEffect(() => {
+    Object.keys(remoteStreams).forEach((id) => {
+      const userId = Number(id);
+      if (volumes[userId] === undefined) {
+        setVolumes((prev) => ({ ...prev, [userId]: 0.5 })); // Default 50%
+      }
+    });
+  }, [remoteStreams]);
 
   const handleKeyEnter = () => {
     if (message.trim() === "") return;
@@ -79,7 +108,7 @@ const ChatPanel = ({
           </div>
           {/* 참여 인원 */}
           <div className="flex flex-row text-white/70 items-center justify-center gap-1">
-            <User className="stroke-white/40 size-4" />
+            <UserIcon className="stroke-white/40 size-4" />
             {currentMemberCount} / 4
           </div>
 
@@ -119,73 +148,77 @@ const ChatPanel = ({
             </div>
 
             <span className="text-[10px] text-[#816BFF] font-medium">
-              {/* {Object.keys(remoteUsers).length + (isVoiceActive ? 1 : 0)} / 4
-              active */}
+              {Object.keys(remoteStreams).length + (isMicActive ? 1 : 0)} / 4
+              active
             </span>
           </div>
 
           {/* Foldable Content */}
           {isVoiceControlOpen && (
             <div className="overflow-y-auto px-3 pb-3 space-y-2 custom-scrollbar">
-              {/* 1. Local User (You) - Only shows if voice is active */}
-              {isMicActive && (
-                <div className="flex flex-col gap-1 p-2 px-2 bg-[#816BFF]/10 rounded-lg border border-[#816BFF]/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-white font-semibold">
-                        나
-                      </span>
-                      {/* <VoiceVisualizer stream={localStream} /> */}
-                    </div>
-                    <Mic size={14} className="text-[#816BFF] animate-pulse" />
+              <div className="flex flex-col gap-1 p-2 px-2 bg-[#816BFF]/10 rounded-lg border border-[#816BFF]/30">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-white font-semibold">
+                      나(`${user.nickname}`)
+                    </span>
+                    {/* <VoiceVisualizer stream={localStream} /> */}
                   </div>
-                  <div className="text-[10px] text-[#816BFF]/70">
-                    마이크 켜짐
-                  </div>
+                  <Mic size={14} className="text-[#816BFF] animate-pulse" />
                 </div>
-              )}
+                <div className="text-[10px] text-[#816BFF]/70">마이크 켜짐</div>
+              </div>
 
               {/* Remote Users */}
-              {/* {Object.entries(remoteUsers).map(([nickname, data]) => (
-                <div
-                  key={nickname}
-                  className="flex flex-col gap-2 p-2 bg-zinc-800/60 rounded-lg border border-white/5 group transition-all hover:border-[#816BFF]/30"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-zinc-200 font-medium truncate pr-2">
-                      {nickname}
-                    </span>
-                    {!data.isMuted && <VoiceVisualizer stream={data.stream} />}
-                    {data.isMuted ? (
-                      <MicOff size={14} className="text-red-500" />
-                    ) : (
-                      <Mic size={14} className="text-[#816BFF] animate-pulse" />
-                    )}
-                  </div>
+              {Object.entries(remoteStreams).map(([id, stream]) => {
+                const userId = Number(id);
+                const isMuted = muteStatuses[userId];
+                const volume = volumes[userId] ?? 0.5; //default 50%
 
-                  <RemoteAudio stream={data.stream} volume={data.volume} /> */}
-
-              {/* Volume Slider */}
-              {/* <div className="flex items-center gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
-                    <Volume2 size={12} className="text-zinc-400 shrink-0" />
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.05"
-                      value={data.volume}
-                      onChange={(e) => {
-                        const newVol = parseFloat(e.target.value);
-                        setRemoteUsers((prev) => ({
-                          ...prev,
-                          [nickname]: { ...prev[nickname], volume: newVol },
-                        }));
-                      }}
-                      className="flex-1 h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-[#816BFF]"
+                return (
+                  <div
+                    key={userId}
+                    className="flex flex-col gap-2 p-2 bg-zinc-800/60 rounded-lg border border-white/5 group transition-all hover:border-[#816BFF]/30"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-zinc-200 font-medium truncate pr-2">
+                        User {userId}{" "}
+                        {/* You can map this to a nickname if you pass a member list */}
+                      </span>
+                      {isMuted ? (
+                        <MicOff size={14} className="text-red-500/70" />
+                      ) : (
+                        <Mic
+                          size={14}
+                          className="text-[#816BFF] animate-pulse"
+                        />
+                      )}
+                    </div>
+                    {/* This component handles the actual audio logic */}
+                    <RemoteAudio
+                      stream={stream}
+                      volume={isMuted ? 0 : volume}
                     />
+
+                    {/* Volume Slider */}
+                    <div className="flex items-center gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
+                      <Volume2 size={12} className="text-zinc-400 shrink-0" />
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.05"
+                        value={volume}
+                        onChange={(e) => {
+                          const newVol = parseFloat(e.target.value);
+                          setVolumes((prev) => ({ ...prev, [userId]: newVol }));
+                        }}
+                        className="flex-1 h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-[#816BFF]"
+                      />
+                    </div>
                   </div>
-                </div>
-              ))} */}
+                );
+              })}
             </div>
           )}
         </div>

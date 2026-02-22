@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useLocation, useNavigate, useParams } from "react-router";
+import { useLocation, useParams } from "react-router";
 import { useRef, useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useWebSocketStore } from "../store/useWebSocketStore";
@@ -14,6 +14,7 @@ import { useRequestPartyRoomData } from "../api/queries/useRequestPartyRoomData"
 import PartyClosedOverlay from "../components/partyroom/PartyClosedOverlay";
 import { useLeaveParty } from "../hooks/useLeaveParty";
 import ClosePartyDialog from "../components/partyroom/ClosePartyDialog";
+import { useWebRTC } from "../hooks/useWebRTC";
 
 const chatWidth = 336;
 const chevronStyle = "stroke-zinc-600 stroke-5";
@@ -30,10 +31,7 @@ const PartyRoomPage = () => {
   const [showDelegationDialog, setShowDelegationDialog] = useState(false);
   const [showClosePartyDialog, setShowClosePartyDialog] = useState(false);
   const [isPartyClosed, setIsPartyClosed] = useState(false);
-
-  const handleToggleMic = () => {
-    alert("click toggle mic");
-  };
+  const [isMicActive, setIsMicActive] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isChatMinimized, setIsChatMinimized] = useState(false);
@@ -48,8 +46,6 @@ const PartyRoomPage = () => {
       ? String(partyRoomData.hostNickname) === String(user.nickname)
       : false;
 
-  console.log(partyRoomData.hostNickname + " | " + user?.nickname);
-
   const handleClickOut = () => {
     if (isHost && !partyRoomData.isPublic) {
       setShowDelegationDialog(true);
@@ -60,7 +56,21 @@ const PartyRoomPage = () => {
     }
   };
 
-  const [isMicActive, setisMicActive] = useState(false);
+  const handleToggleMic = () => {
+    if (!localStream) {
+      alert("마이크를 초기화 중입니다. 잠시만 기다려주세요!");
+      return;
+    }
+
+    const isNowActive = toggleLocalMic(); // 훅 내부의 함수 실행
+    setIsMicActive(isNowActive);
+
+    // 내 로컬 상태 업데이트
+    setMuteStatuses((prev) => ({
+      ...prev,
+      [user!.userId]: !isNowActive,
+    }));
+  };
 
   // 1. 파티 연결 및 텍스트 채팅
   const { chatMessages, memberCount, sendChat, setChatMessages } = usePartyChat(
@@ -89,6 +99,17 @@ const PartyRoomPage = () => {
   });
 
   // 3. Subscribe to Voice Chat
+  const {
+    localStream,
+    toggleLocalMic,
+    remoteStreams,
+    muteStatuses,
+    setMuteStatuses,
+  } = useWebRTC({
+    partyId: numericPartyId,
+    stompClient,
+    user,
+  });
 
   // 4. 파티 퇴장
   const { leaveParty } = useLeaveParty({
@@ -126,13 +147,16 @@ const PartyRoomPage = () => {
         style={{ width: isChatMinimized ? 0 : chatWidth }}
       >
         <ChatPanel
+          user={user}
           chatMessages={chatMessages}
           onSendMessage={sendChat}
           partyRoomData={partyRoomData}
           // TODO: check if I can get count from partyRoomData
           currentMemberCount={currentMemberCount}
           isMicActive={isMicActive}
-          onToggleMic={handleToggleMic}
+          onToggleMic={() => handleToggleMic()}
+          remoteStreams={remoteStreams}
+          muteStatuses={muteStatuses}
         />
       </div>
 
