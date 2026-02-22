@@ -147,26 +147,50 @@ const ChatPanel = ({
               )}
             </div>
 
-            <span className="text-[10px] text-[#816BFF] font-medium">
-              {Object.keys(remoteStreams).length + (isMicActive ? 1 : 0)} / 4
-              active
-            </span>
+            {/* {(() => {
+              const activeCount =
+                Object.keys(remoteStreams).length + (isMicActive ? 1 : 0);
+              const isMultiple = activeCount >= 1;
+
+              return (
+                <span
+                  className={`text-[10px] font-medium ${isMultiple ? "text-[#816BFF]" : "text-zinc-400"}`}
+                >
+                  {activeCount} / 4 active
+                </span>
+              );
+            })()} */}
           </div>
 
           {/* Foldable Content */}
           {isVoiceControlOpen && (
             <div className="overflow-y-auto px-3 pb-3 space-y-2 custom-scrollbar">
-              <div className="flex flex-col gap-1 p-2 px-2 bg-[#816BFF]/10 rounded-lg border border-[#816BFF]/30">
+              <div
+                className={`flex flex-col gap-1 p-2 px-2 border rounded-lg ${isMicActive ? "bg-[#816BFF]/10 border-1.5 border-[#816BFF]/30" : "bg-zinc-400/10 border-zinc-400/30"} `}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-white font-semibold">
-                      나(`${user.nickname}`)
+                    <span
+                      className={`text-xs font-semibold ${isMicActive ? "text-[#816BFF]" : "text-zinc-400/70"}`}
+                    >
+                      {user.nickname} (나)
                     </span>
                     {/* <VoiceVisualizer stream={localStream} /> */}
                   </div>
-                  <Mic size={14} className="text-[#816BFF] animate-pulse" />
+
+                  <div className="flex items-center gap-1">
+                    <div
+                      className={`text-[10px] ${isMicActive ? "text-[#816BFF]" : "text-zinc-400/70"}`}
+                    >
+                      내 마이크 {isMicActive ? "켜짐" : "꺼짐"}
+                    </div>
+                    {isMicActive ? (
+                      <Mic size={14} className="text-[#816BFF] " />
+                    ) : (
+                      <MicOff size={14} className="text-zinc-400/70" />
+                    )}
+                  </div>
                 </div>
-                <div className="text-[10px] text-[#816BFF]/70">마이크 켜짐</div>
               </div>
 
               {/* Remote Users */}
@@ -178,21 +202,27 @@ const ChatPanel = ({
                 return (
                   <div
                     key={userId}
-                    className="flex flex-col gap-2 p-2 bg-zinc-800/60 rounded-lg border border-white/5 group transition-all hover:border-[#816BFF]/30"
+                    className={`flex flex-col gap-2 p-2  rounded-lg border border-white/5 group transition-all hover:border-[#816BFF]/30 ${isMuted ? "bg-zinc-800/60" : "bg-[#816BFF]/10"}`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-zinc-200 font-medium truncate pr-2">
+                      <span
+                        className={`text-xs font-semibold truncate pr-2 ${isMuted ? "text-zinc-400/70" : "text-[#816BFF]"}`}
+                      >
                         User {userId}{" "}
                         {/* You can map this to a nickname if you pass a member list */}
                       </span>
-                      {isMuted ? (
-                        <MicOff size={14} className="text-red-500/70" />
-                      ) : (
-                        <Mic
-                          size={14}
-                          className="text-[#816BFF] animate-pulse"
-                        />
-                      )}
+                      <div className="flex items-center gap-1">
+                        <span
+                          className={`text-[10px] ${isMuted ? "text-zinc-400/70" : "text-[#816BFF]"}`}
+                        >
+                          상대 마이크 {isMuted ? "꺼짐" : "켜짐"}
+                        </span>
+                        {isMuted ? (
+                          <MicOff size={14} className="text-zinc-400/70" />
+                        ) : (
+                          <Mic size={14} className="text-[#816BFF]" />
+                        )}
+                      </div>
                     </div>
                     {/* This component handles the actual audio logic */}
                     <RemoteAudio
@@ -204,6 +234,7 @@ const ChatPanel = ({
                     <div className="flex items-center gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
                       <Volume2 size={12} className="text-zinc-400 shrink-0" />
                       <input
+                        disabled={isMuted}
                         type="range"
                         min="0"
                         max="1"
