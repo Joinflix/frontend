@@ -53,19 +53,19 @@ const HostDelegationDialog = ({
               <button
                 onClick={handleFetchMemberList}
                 disabled={isFetchingMemberList}
-                className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl transition-all font-medium disabled:opacity-50"
+                className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl transition-all font-medium disabled:opacity-50 cursor-pointer"
               >
                 {isFetchingMemberList ? "로딩 중..." : "권한 위임 후 나가기"}
               </button>
               <button
                 onClick={() => onLeave()}
-                className="w-full py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl transition-all font-medium border border-red-500/10"
+                className="w-full py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl transition-all font-medium border border-red-500/10 cursor-pointer"
               >
                 파티 종료 (모두 퇴장)
               </button>
               <button
                 onClick={onClose}
-                className="mt-2 py-2 text-zinc-500 hover:text-zinc-300 text-sm"
+                className="mt-2 py-2 text-zinc-500 hover:text-zinc-300 text-sm cursor-pointer"
               >
                 취소
               </button>
@@ -100,7 +100,7 @@ const HostDelegationDialog = ({
             </div>
             <button
               onClick={() => setIsDelegating(false)}
-              className="w-full py-2 text-zinc-400 hover:text-white transition-colors text-sm"
+              className="w-full py-2 text-zinc-400 hover:text-white transition-colors text-sm cursor-pointer"
             >
               뒤로 가기
             </button>
