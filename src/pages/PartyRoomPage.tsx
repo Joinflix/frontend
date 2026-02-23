@@ -15,6 +15,7 @@ import PartyClosedOverlay from "../components/partyroom/PartyClosedOverlay";
 import { useLeaveParty } from "../hooks/useLeaveParty";
 import ClosePartyDialog from "../components/partyroom/ClosePartyDialog";
 import { useWebRTC } from "../hooks/useWebRTC";
+import LoadingOverlay from "../components/signup/step/LoadingOverlay";
 
 const chatWidth = 336;
 const chevronStyle = "stroke-zinc-600 stroke-5";
@@ -32,15 +33,19 @@ const PartyRoomPage = () => {
   const [showClosePartyDialog, setShowClosePartyDialog] = useState(false);
   const [isPartyClosed, setIsPartyClosed] = useState(false);
   const [isMicActive, setIsMicActive] = useState(false);
-
-  const videoRef = useRef<HTMLVideoElement>(null);
   const [isChatMinimized, setIsChatMinimized] = useState(false);
 
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const hasHandledBlock = useRef(false);
+
   const numericPartyId = partyId ? Number(partyId) : undefined;
-  const { data: partyRoomData } = useRequestPartyRoomData(
+  const { data: partyRoomData, isPending } = useRequestPartyRoomData(
     numericPartyId,
     location.state?.partyRoomData,
   );
+  console.log({ partyRoomData });
+  console.log(location.state?.partyRoomData);
+
   const isHost =
     partyRoomData && user
       ? String(partyRoomData.hostNickname) === String(user.nickname)
@@ -48,7 +53,11 @@ const PartyRoomPage = () => {
 
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
-      isHost && currentLocation.pathname !== nextLocation.pathname,
+      isHost &&
+      !hasHandledBlock.current &&
+      !showDelegationDialog &&
+      !showClosePartyDialog &&
+      currentLocation.pathname !== nextLocation.pathname,
   );
 
   const handleClickOut = () => {
@@ -105,6 +114,7 @@ const PartyRoomPage = () => {
     accessToken,
     setChatMessages,
     user,
+    partyRoomData,
   });
 
   // 3. Subscribe to Voice Chat
@@ -149,86 +159,93 @@ const PartyRoomPage = () => {
 
   return (
     <div className="flex h-screen relative">
-      {/* Video */}
-      <VideoPlayer
-        videoRef={videoRef}
-        partyRoomData={partyRoomData}
-        isHost={isHost}
-        onClickBack={handleClickOut}
-      />
+      {isPending || !partyRoomData ? (
+        <LoadingOverlay message="파티 입장 대기 중" />
+      ) : (
+        <>
+          {/* Video */}
+          <VideoPlayer
+            videoRef={videoRef}
+            partyRoomData={partyRoomData}
+            isHost={isHost}
+            onClickBack={handleClickOut}
+          />
 
-      {/* Mic Control Overlay*/}
-      {isChatMinimized && (
-        <MicControlOverlay
-          isMicActive={isMicActive}
-          onToggleMic={handleToggleMic}
-        />
+          {/* Mic Control Overlay*/}
+          {isChatMinimized && (
+            <MicControlOverlay
+              isMicActive={isMicActive}
+              onToggleMic={handleToggleMic}
+            />
+          )}
+
+          {/* Chat Panel*/}
+          <div
+            className="flex flex-col h-full bg-zinc-900 transition-all duration-300"
+            style={{ width: isChatMinimized ? 0 : chatWidth }}
+          >
+            <ChatPanel
+              user={user}
+              chatMessages={chatMessages}
+              onSendMessage={sendChat}
+              partyRoomData={partyRoomData}
+              // TODO: check if I can get count from partyRoomData
+              currentMemberCount={currentMemberCount}
+              isMicActive={isMicActive}
+              onToggleMic={() => handleToggleMic()}
+              remoteStreams={remoteStreams}
+              muteStatuses={muteStatuses}
+            />
+          </div>
+
+          {/* Chat Panel Handle */}
+          <div
+            className="absolute top-1/2 transform -translate-y-1/2 w-8 h-15 flex items-center justify-center rounded-l-lg cursor-pointer bg-zinc-900 z-20"
+            onClick={() => setIsChatMinimized((prev) => !prev)}
+            style={{
+              right: isChatMinimized ? 0 : chatWidth,
+              transition: "right 0.3s",
+            }}
+          >
+            {isChatMinimized ? (
+              <ChevronLeft className={chevronStyle} />
+            ) : (
+              <ChevronRight className={chevronStyle} />
+            )}
+          </div>
+
+          {showDelegationDialog && (
+            <HostDelegationDialog
+              partyId={numericPartyId}
+              onClose={() => setShowDelegationDialog(false)}
+              onLeave={handleLeaveParty}
+            />
+          )}
+
+          {blocker.state === "blocked" && (
+            <HostDelegationDialog
+              partyId={numericPartyId}
+              onClose={() => blocker.reset()}
+              onLeave={(newHostId) => {
+                hasHandledBlock.current = true;
+                markAsLeftManually();
+                leaveParty(newHostId);
+                blocker.proceed();
+              }}
+            />
+          )}
+
+          {showClosePartyDialog && (
+            <ClosePartyDialog
+              onClose={() => setShowClosePartyDialog(false)}
+              onLeave={handleLeaveParty}
+            />
+          )}
+
+          {/* Party Closed Overlay */}
+          {isPartyClosed && <PartyClosedOverlay />}
+        </>
       )}
-
-      {/* Chat Panel*/}
-      <div
-        className="flex flex-col h-full bg-zinc-900 transition-all duration-300"
-        style={{ width: isChatMinimized ? 0 : chatWidth }}
-      >
-        <ChatPanel
-          user={user}
-          chatMessages={chatMessages}
-          onSendMessage={sendChat}
-          partyRoomData={partyRoomData}
-          // TODO: check if I can get count from partyRoomData
-          currentMemberCount={currentMemberCount}
-          isMicActive={isMicActive}
-          onToggleMic={() => handleToggleMic()}
-          remoteStreams={remoteStreams}
-          muteStatuses={muteStatuses}
-        />
-      </div>
-
-      {/* Chat Panel Handle */}
-      <div
-        className="absolute top-1/2 transform -translate-y-1/2 w-8 h-15 flex items-center justify-center rounded-l-lg cursor-pointer bg-zinc-900 z-20"
-        onClick={() => setIsChatMinimized((prev) => !prev)}
-        style={{
-          right: isChatMinimized ? 0 : chatWidth,
-          transition: "right 0.3s",
-        }}
-      >
-        {isChatMinimized ? (
-          <ChevronLeft className={chevronStyle} />
-        ) : (
-          <ChevronRight className={chevronStyle} />
-        )}
-      </div>
-
-      {showDelegationDialog && (
-        <HostDelegationDialog
-          partyId={numericPartyId}
-          onClose={() => setShowDelegationDialog(false)}
-          onLeave={handleLeaveParty}
-        />
-      )}
-
-      {blocker.state === "blocked" && (
-        <HostDelegationDialog
-          partyId={numericPartyId}
-          onClose={() => blocker.reset()}
-          onLeave={(newHostId) => {
-            markAsLeftManually();
-            leaveParty(newHostId);
-            blocker.proceed();
-          }}
-        />
-      )}
-
-      {showClosePartyDialog && (
-        <ClosePartyDialog
-          onClose={() => setShowClosePartyDialog(false)}
-          onLeave={handleLeaveParty}
-        />
-      )}
-
-      {/* Party Closed Overlay */}
-      {isPartyClosed && <PartyClosedOverlay />}
     </div>
   );
 };

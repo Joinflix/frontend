@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { VideoSyncMessage } from "../types/party";
+import type { PartyRoomData, VideoSyncMessage } from "../types/party";
 import type { Client, IMessage } from "@stomp/stompjs";
 import type { ChatStompMessage } from "../types/chat";
 import type { User } from "../store/useAuthStore";
@@ -14,6 +14,7 @@ interface UseVideoSyncProps {
   accessToken: string | null;
   setChatMessages: React.Dispatch<React.SetStateAction<ChatStompMessage[]>>;
   user: User | null;
+  partyRoomData: PartyRoomData;
 }
 
 export const useVideoSync = ({
@@ -26,10 +27,46 @@ export const useVideoSync = ({
   accessToken,
   setChatMessages,
   user,
+  partyRoomData,
 }: UseVideoSyncProps) => {
   const isProcessingSync = useRef(false);
   const isUserSeeking = useRef(false);
   const isHostRef = useRef(isHost);
+  const isInitialSyncDone = useRef(false);
+
+  const videoStatus = partyRoomData?.videoStatus;
+  const videoCurrentTime = videoStatus?.currentTime;
+  const videoPaused = videoStatus?.paused;
+
+  useEffect(() => {
+    if (isInitialSyncDone.current || isHost) return;
+    if (videoCurrentTime === undefined || videoPaused === undefined) return;
+
+    const interval = setInterval(() => {
+      const video = videoRef.current;
+      if (!video) return;
+      clearInterval(interval);
+
+      const performSync = () => {
+        if (isInitialSyncDone.current) return;
+        video.currentTime = videoCurrentTime;
+        if (!videoPaused) {
+          video.play().catch(console.warn);
+        } else {
+          video.pause();
+        }
+        isInitialSyncDone.current = true;
+      };
+
+      if (video.readyState >= 1) {
+        performSync();
+      } else {
+        video.addEventListener("loadedmetadata", performSync, { once: true });
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [videoCurrentTime, videoPaused, isHost]);
 
   // PartyRoomPage:70 이걸로 바꿔야 하나?
   // 호스트 상태 최신화
@@ -101,12 +138,11 @@ export const useVideoSync = ({
         // isHostRef(Authority Guard), isProcessingSync(Infinite Event Loop Guard)
         // ref: updates instantly, useState: updates asynchronously
         const video = videoRef.current;
-        if (!video) return;
+        if (!video || senderId === user?.userId) return;
         // [권한 가드]
         // host의 video player가 자신이 보낸 stomp message에 반응하지 않도록 처리.
         // video가 없거나 본인이 host인 경우, 동기화 로직 실행하지 않고 종료.
         if (senderId === user?.userId) return;
-
         isProcessingSync.current = true;
 
         // [이벤트 루프 가드 ON]
