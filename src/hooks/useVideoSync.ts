@@ -107,6 +107,8 @@ export const useVideoSync = ({
         // video가 없거나 본인이 host인 경우, 동기화 로직 실행하지 않고 종료.
         if (senderId === user?.userId) return;
 
+        isProcessingSync.current = true;
+
         // [이벤트 루프 가드 ON]
         // 1. 코드로 비디오 상태를 변경할 때, 브라우저의 기본 이벤트(onPause, onSeek 등)가 트리거되어
         // 다시 메시지를 보내는 infinite loop을 방지하기 위해 잠금(lock) 설정.
@@ -114,10 +116,12 @@ export const useVideoSync = ({
         // 2. 비디오 상태 변경 적용 (호스트의 상태와 동기화)
         if (action === "SEEK") {
           video.currentTime = currentTime;
-        } else {
+        } else if (action === "PAUSE") {
+          video.pause();
+          video.currentTime = currentTime; // Sync time even on pause
+        } else if (action === "PLAY") {
           video.currentTime = currentTime;
-          if (paused) video.pause();
-          else video.play().catch(() => {});
+          video.play().catch(() => {});
         }
 
         // [이벤트 루프 가드 OFF]
