@@ -35,9 +35,9 @@ export const useNotification = () => {
   );
 
   useEffect(() => {
-    // ✅ Only subscribe when BOTH conditions are met
+    // Only subscribe when BOTH conditions are met
     if (!isAuthChecked || !accessToken) {
-      // ✅ Clean up any existing connection
+      // Clean up any existing connection
       if (esRef.current) {
         esRef.current.close();
         esRef.current = null;
@@ -104,14 +104,12 @@ export const useNotification = () => {
       });
 
       es.onopen = () => {
-        console.log("SSE connection opened");
         // Reset reconnect attempts on successful connection
         reconnectAttemptsRef.current = 0;
       };
 
       es.onmessage = (event) => {
         if (event.data === "connected") {
-          console.log("SSE connected successfully");
           return;
         }
       };
@@ -119,20 +117,20 @@ export const useNotification = () => {
       es.onerror = (error: any) => {
         console.error("SSE connection error:", error);
 
-        // ✅ Close the current connection
+        // Close the current connection
         if (esRef.current) {
           esRef.current.close();
           esRef.current = null;
         }
 
-        // ✅ Check if we still have a valid token in store
+        // Check if we still have a valid token in store
         const currentToken = useAuthStore.getState().accessToken;
         if (!currentToken) {
           console.log("No token available, stopping SSE reconnection");
           return;
         }
 
-        // ✅ Implement exponential backoff for reconnection
+        // Implement exponential backoff for reconnection
         if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
           const backoffDelay = Math.min(
             1000 * Math.pow(2, reconnectAttemptsRef.current),
@@ -165,7 +163,6 @@ export const useNotification = () => {
       console.error("Failed to create SSE connection:", error);
     }
 
-    // ✅ Cleanup function
     return () => {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);

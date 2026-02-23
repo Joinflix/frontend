@@ -141,10 +141,6 @@ export const useWebRTC = ({
 
     // When remote audio arrives
     pc.ontrack = (event) => {
-      console.log(
-        `[ontrack 터짐!!] 상대방(${remoteUserId})의 스트림 수신 성공:`,
-        event.streams[0],
-      );
       setRemoteStreams((prev) => ({
         ...prev,
         [remoteUserId]: event.streams[0],
@@ -180,7 +176,6 @@ export const useWebRTC = ({
       pendingJoins.current.push(payload.senderId); // 나중에 마이크 생기면 전화 걸게 저장
       return;
     }
-    console.log("누군가 입장함! handleJoin 시작:", payload.senderNickname);
     const pc = createPeerConnection(payload.senderId);
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
@@ -284,12 +279,9 @@ export const useWebRTC = ({
         body: JSON.stringify(joinPayload),
       });
 
-      console.log("2. Local stream is ready. Sending JOIN signal.");
-
       while (pendingJoins.current.length > 0) {
         const remoteId = pendingJoins.current.shift();
         if (remoteId) {
-          console.log("대기 명단 유저에게 전화 시도:", remoteId);
           handleJoin({
             senderId: remoteId,
             senderNickname: "WaitingUser",
@@ -309,22 +301,6 @@ export const useWebRTC = ({
       `/sub/party/${partyId}/voice`,
       (message) => {
         const messageContent: voiceSignalPayload = JSON.parse(message.body);
-        console.log(
-          "📩 신호 수신:",
-          messageContent.type,
-          "보낸사람:",
-          messageContent.senderNickname,
-        );
-
-        // 내 메시지인지 판단하는 로그를 더 자세히 찍어봅시다
-        console.log("📩 신호 도착!", {
-          senderNickname: messageContent.senderNickname,
-          myNickname: user.nickname,
-          type: messageContent.type,
-          senderId: messageContent.senderId,
-          myId: user.userId,
-          isMe: Number(messageContent.senderId) === Number(user.userId),
-        });
 
         // Ignore my own messages
         if (messageContent.senderId === user.userId) return;

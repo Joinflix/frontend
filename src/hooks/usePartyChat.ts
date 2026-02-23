@@ -32,14 +32,6 @@ export const usePartyChat = ({
   }, []);
 
   useEffect(() => {
-    console.log("[usePartyChat] effect", {
-      stompClient: !!stompClient,
-      connected: stompClient?.connected,
-      isConnected,
-    });
-  });
-
-  useEffect(() => {
     if (!stompClient || !partyId) return;
     if (!stompClient.connected) return;
 

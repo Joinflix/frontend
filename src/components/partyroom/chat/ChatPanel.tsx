@@ -55,8 +55,6 @@ const ChatPanel = ({
   remoteStreams,
   muteStatuses,
 }: ChatWindowProps) => {
-  console.log("Count of streams:", Object.keys(remoteStreams).length);
-
   const [message, setMessage] = useState("");
   const [isVoiceControlOpen, setIsVoiceControlOpen] = useState(true);
   const [volumes, setVolumes] = useState<{ [userId: number]: number }>({});
