@@ -11,7 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import type { PartyRoomData } from "../../../types/party";
 import type { ChatStompMessage } from "../../../types/chat";
 import RemoteAudio from "./RemoteAudio";
-import type { User } from "../store/useAuthStore";
+import type { User } from "../../../store/useAuthStore";
 
 interface ChatWindowProps {
   // GENERAL
@@ -102,27 +102,31 @@ const ChatPanel = ({
       <div className="flex flex-col min-w-84 max-w-84 bg-zinc-900">
         {/* 채팅 헤더 */}
         <div className="flex flex-col pt-3">
-          {/* 파티룸 이름, 영화 제목 */}
-          <div className="text-center text-white text-base">
-            {partyRoomData?.roomName}
-          </div>
-          {/* 참여 인원 */}
-          <div className="flex flex-row text-white/70 items-center justify-center gap-1">
-            <UserIcon className="stroke-white/40 size-4" />
-            {currentMemberCount} / 4
+          <div className="flex justify-between gap-3 px-4">
+            {/* 파티룸 이름, 영화 제목 */}
+            <div className="text-center text-white text-base">
+              {partyRoomData?.roomName}
+            </div>
+            {/* 참여 인원 */}
+            <div className="flex flex-row text-zinc-400/70 items-center justify-center gap-1 text-sm">
+              <UserIcon className="stroke-zinc-400/70 size-4 stroke-2.5" />
+              {currentMemberCount} / 4
+            </div>
           </div>
 
           <div className="flex flex-col py-3 px-3 border-b border-white/10">
             {/* Host Display */}
-            <div className="flex items-center gap-3 p-2 bg-zinc-800/30 rounded-lg border border-white/5">
-              <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center">
+            <div className="flex items-center gap-2 p-2 bg-zinc-800/30 rounded-lg border border-white/5">
+              <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center ml-1">
                 <Crown size={14} className="text-amber-500" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-white font-medium truncate">
+                <p className="text-md text-white font-medium truncate">
                   {partyRoomData?.hostNickname}
                 </p>
-                <p className="text-[10px] text-zinc-500">Party Host</p>
+              </div>
+              <div className="text-white text-xs mr-2">
+                {partyRoomData.hostControl ? "호스트만 컨트롤" : "모두 컨트롤"}
               </div>
             </div>
           </div>
@@ -173,7 +177,7 @@ const ChatPanel = ({
                     <span
                       className={`text-xs font-semibold ${isMicActive ? "text-[#816BFF]" : "text-zinc-400/70"}`}
                     >
-                      {user.nickname} (나)
+                      {user?.nickname} (나)
                     </span>
                     {/* <VoiceVisualizer stream={localStream} /> */}
                   </div>
