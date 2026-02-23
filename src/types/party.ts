@@ -6,6 +6,8 @@ export interface VideoStatus {
   paused: boolean;
 }
 
+export type PartyStatus = "SCHEDULED" | "ACTIVE";
+
 //VideoSyncRequest(BE)
 export interface VideoSyncMessage {
   currentTime: number;
@@ -26,4 +28,6 @@ export interface PartyRoomData {
   videoStatus?: VideoStatus;
   hostControl: boolean;
   hostId: number;
+  status: PartyStatus;
+  scheduledAt?: string;
 }
