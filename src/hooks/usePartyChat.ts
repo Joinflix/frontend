@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ChatStompMessage } from "../types/chat";
 import type { Client, IMessage } from "@stomp/stompjs";
@@ -21,19 +21,9 @@ export const usePartyChat = ({
   const queryClient = useQueryClient();
   const [chatMessages, setChatMessages] = useState<ChatStompMessage[]>([]);
   const [memberCount, setMemberCount] = useState<number | null>(null);
-  const hasLeftManually = useRef(false);
 
   useEffect(() => {
-    const wasRefresh = sessionStorage.getItem("partyRefresh");
-    if (wasRefresh) {
-      sessionStorage.removeItem("partyRefresh");
-      hasLeftManually.current = true;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!stompClient || !partyId) return;
-    if (!stompClient.connected) return;
+    if (!stompClient || !isConnected || !partyId) return;
 
     const authHeader = {
       Authorization: accessToken?.startsWith("Bearer ")
@@ -53,7 +43,7 @@ export const usePartyChat = ({
             queryKey: ["partyRoomData", partyId],
           });
 
-          if (messageContent.currentCount === 0 && !hasLeftManually.current) {
+          if (messageContent.currentCount === 0) {
             // 만약 이 메시지를 받은 사용자가 아직 방에 있다면 (에러 상황 대비)
             onPartyClosed();
           }
@@ -73,6 +63,7 @@ export const usePartyChat = ({
     });
 
     return () => {
+      console.log("Unsubscribing from party:", partyId);
       textChatSub?.unsubscribe();
     };
   }, [stompClient, isConnected, partyId, accessToken, queryClient]);
@@ -92,15 +83,10 @@ export const usePartyChat = ({
     }
   };
 
-  const markAsLeftManually = () => {
-    hasLeftManually.current = true;
-  };
-
   return {
     chatMessages,
     memberCount,
     sendChat,
     setChatMessages,
-    markAsLeftManually,
   };
 };

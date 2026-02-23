@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useBlocker, useLocation, useParams } from "react-router";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useWebSocketStore } from "../store/useWebSocketStore";
 import VideoPlayer from "../components/partyroom/video/VideoPlayer";
@@ -87,19 +87,15 @@ const PartyRoomPage = () => {
   };
 
   // 1. 파티 연결 및 텍스트 채팅
-  const {
-    chatMessages,
-    memberCount,
-    sendChat,
-    setChatMessages,
-    markAsLeftManually,
-  } = usePartyChat({
-    partyId: numericPartyId,
-    stompClient,
-    isConnected,
-    accessToken,
-    onPartyClosed: () => setIsPartyClosed(true),
-  });
+  const { chatMessages, memberCount, sendChat, setChatMessages } = usePartyChat(
+    {
+      partyId: numericPartyId,
+      stompClient,
+      isConnected,
+      accessToken,
+      onPartyClosed: () => setIsPartyClosed(true),
+    },
+  );
   const currentMemberCount =
     memberCount ?? partyRoomData?.currentMemberCount ?? 0;
 
@@ -139,23 +135,22 @@ const PartyRoomPage = () => {
   });
 
   const handleLeaveParty = (newHostId?: number) => {
-    markAsLeftManually();
     setShowDelegationDialog(false);
     leaveParty(newHostId);
   };
 
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      sessionStorage.setItem("partyRefresh", "true");
-      if (isHost) {
-        // Standard way to trigger the browser's "Leave site?" confirmation
-        e.preventDefault();
-        e.returnValue = "";
-      }
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [isHost]);
+  // useEffect(() => {
+  //   const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+  //     sessionStorage.setItem("partyRefresh", "true");
+  //     if (isHost) {
+  //       // Standard way to trigger the browser's "Leave site?" confirmation
+  //       e.preventDefault();
+  //       e.returnValue = "";
+  //     }
+  //   };
+  //   window.addEventListener("beforeunload", handleBeforeUnload);
+  //   return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  // }, [isHost]);
 
   return (
     <div className="flex h-screen relative">
@@ -228,7 +223,6 @@ const PartyRoomPage = () => {
               onClose={() => blocker.reset()}
               onLeave={(newHostId) => {
                 hasHandledBlock.current = true;
-                markAsLeftManually();
                 leaveParty(newHostId);
                 blocker.proceed();
               }}
