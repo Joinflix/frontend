@@ -1,5 +1,4 @@
-// hooks/usePartyChat.ts
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ChatStompMessage } from "../types/chat";
 import type { Client, IMessage } from "@stomp/stompjs";
@@ -22,9 +21,33 @@ export const usePartyChat = ({
   const queryClient = useQueryClient();
   const [chatMessages, setChatMessages] = useState<ChatStompMessage[]>([]);
   const [memberCount, setMemberCount] = useState<number | null>(null);
+  const hasLeftManually = useRef(false);
 
   useEffect(() => {
-    if (!stompClient || !isConnected || !partyId) return;
+    const wasRefresh = sessionStorage.getItem("partyRefresh");
+    if (wasRefresh) {
+      sessionStorage.removeItem("partyRefresh");
+      hasLeftManually.current = true;
+    }
+  }, []);
+
+  useEffect(() => {
+    console.log("[usePartyChat] effect", {
+      stompClient: !!stompClient,
+      connected: stompClient?.connected,
+      isConnected,
+    });
+  });
+
+  useEffect(() => {
+    if (!stompClient || !partyId) return;
+    if (!stompClient.connected) return;
+
+    const authHeader = {
+      Authorization: accessToken?.startsWith("Bearer ")
+        ? accessToken
+        : `Bearer ${accessToken}`,
+    };
 
     // 1. 텍스트 채팅 구독 (Subscribe to Text Chat)
     const textChatSub = stompClient.subscribe(
@@ -38,7 +61,7 @@ export const usePartyChat = ({
             queryKey: ["partyRoomData", partyId],
           });
 
-          if (messageContent.currentCount === 0) {
+          if (messageContent.currentCount === 0 && !hasLeftManually.current) {
             // 만약 이 메시지를 받은 사용자가 아직 방에 있다면 (에러 상황 대비)
             onPartyClosed();
           }
@@ -52,19 +75,13 @@ export const usePartyChat = ({
     );
 
     // 2. 입장 신호 전송 (Text Chat subscription 직후 1회, publish ENTER signal)
-    const authHeader = {
-      Authorization: accessToken?.startsWith("Bearer ")
-        ? accessToken
-        : `Bearer ${accessToken}`,
-    };
-
     stompClient.publish({
       destination: `/pub/party/${partyId}/enter`,
       headers: authHeader,
     });
 
     return () => {
-      textChatSub.unsubscribe();
+      textChatSub?.unsubscribe();
     };
   }, [stompClient, isConnected, partyId, accessToken, queryClient]);
 
@@ -83,5 +100,15 @@ export const usePartyChat = ({
     }
   };
 
-  return { chatMessages, memberCount, sendChat, setChatMessages };
+  const markAsLeftManually = () => {
+    hasLeftManually.current = true;
+  };
+
+  return {
+    chatMessages,
+    memberCount,
+    sendChat,
+    setChatMessages,
+    markAsLeftManually,
+  };
 };

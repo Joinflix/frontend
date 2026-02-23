@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useLocation, useParams } from "react-router";
-import { useRef, useState } from "react";
+import { useBlocker, useLocation, useParams } from "react-router";
+import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useWebSocketStore } from "../store/useWebSocketStore";
 import VideoPlayer from "../components/partyroom/video/VideoPlayer";
@@ -46,6 +46,11 @@ const PartyRoomPage = () => {
       ? String(partyRoomData.hostNickname) === String(user.nickname)
       : false;
 
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      isHost && currentLocation.pathname !== nextLocation.pathname,
+  );
+
   const handleClickOut = () => {
     if (isHost && !partyRoomData.isPublic) {
       setShowDelegationDialog(true);
@@ -73,15 +78,19 @@ const PartyRoomPage = () => {
   };
 
   // 1. 파티 연결 및 텍스트 채팅
-  const { chatMessages, memberCount, sendChat, setChatMessages } = usePartyChat(
-    {
-      partyId: numericPartyId,
-      stompClient,
-      isConnected,
-      accessToken,
-      onPartyClosed: () => setIsPartyClosed(true),
-    },
-  );
+  const {
+    chatMessages,
+    memberCount,
+    sendChat,
+    setChatMessages,
+    markAsLeftManually,
+  } = usePartyChat({
+    partyId: numericPartyId,
+    stompClient,
+    isConnected,
+    accessToken,
+    onPartyClosed: () => setIsPartyClosed(true),
+  });
   const currentMemberCount =
     memberCount ?? partyRoomData?.currentMemberCount ?? 0;
 
@@ -120,9 +129,23 @@ const PartyRoomPage = () => {
   });
 
   const handleLeaveParty = (newHostId?: number) => {
+    markAsLeftManually();
     setShowDelegationDialog(false);
     leaveParty(newHostId);
   };
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      sessionStorage.setItem("partyRefresh", "true");
+      if (isHost) {
+        // Standard way to trigger the browser's "Leave site?" confirmation
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isHost]);
 
   return (
     <div className="flex h-screen relative">
@@ -184,6 +207,19 @@ const PartyRoomPage = () => {
           onLeave={handleLeaveParty}
         />
       )}
+
+      {blocker.state === "blocked" && (
+        <HostDelegationDialog
+          partyId={numericPartyId}
+          onClose={() => blocker.reset()}
+          onLeave={(newHostId) => {
+            markAsLeftManually();
+            leaveParty(newHostId);
+            blocker.proceed();
+          }}
+        />
+      )}
+
       {showClosePartyDialog && (
         <ClosePartyDialog
           onClose={() => setShowClosePartyDialog(false)}
