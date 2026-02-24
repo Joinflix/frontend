@@ -72,23 +72,26 @@ const PasswordSignin = () => {
             )}
           </div>
           {/* 비밀번호 */}
-          <div className="relative w-full max-w-md">
-            <input
-              {...register("password")}
-              type={showPassword ? "text" : "password"}
-              className="w-full px-3 pr-10 border border-[#816BFF] bg-[#816BFF]/10 rounded-xs py-2.5"
-              placeholder="비밀번호(8자리 이상)"
-            />
-            <button
-              className="absolute inset-y-0 right-3 flex items-center cursor-pointer"
-              onClick={togglePasswordVisibility}
-            >
-              {showPassword ? (
-                <Eye className="size-5 stroke-[#816BFF]" />
-              ) : (
-                <EyeOff className="size-5 stroke-[#816BFF]" />
-              )}
-            </button>
+          <div className="flex flex-col w-full max-w-md">
+            <div className="relative w-full">
+              <input
+                {...register("password")}
+                type={showPassword ? "text" : "password"}
+                className="w-full px-3 pr-10 border border-[#816BFF] bg-[#816BFF]/10 rounded-xs py-2.5"
+                placeholder="비밀번호(8자리 이상)"
+              />
+              <button
+                className="absolute inset-y-0 right-3 flex items-center cursor-pointer"
+                onClick={togglePasswordVisibility}
+              >
+                {showPassword ? (
+                  <Eye className="size-5 stroke-[#816BFF]" />
+                ) : (
+                  <EyeOff className="size-5 stroke-[#816BFF]" />
+                )}
+              </button>
+            </div>
+
             {/* 비밀번호 입력 에러 메시지 */}
             {errors.password && (
               <p className="text-red-500 text-sm mt-1">

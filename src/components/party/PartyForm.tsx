@@ -53,29 +53,32 @@ const PartyForm = ({
             {/* 비밀번호 */}
             <div className="flex flex-col gap-y-2">
               <label className="text-sm">비밀번호 설정</label>
-              <div className="relative w-full">
-                <input
-                  {...register("password")}
-                  type={showPassword ? "text" : "password"}
-                  className="text-sm border border-white/50 p-3 rounded-xs bg-transparent w-full"
-                  placeholder="숫자 4자리를 입력해 주세요"
-                />
-                <button
-                  className="absolute inset-y-0 right-3 flex items-center cursor-pointer"
-                  onClick={togglePasswordVisibility}
-                >
-                  {showPassword ? (
-                    <Eye className="size-5 text-white/50" />
-                  ) : (
-                    <EyeOff className="size-5 text-white/50" />
-                  )}
-                </button>
+
+              <div className="flex flex-col">
+                <div className="relative w-full">
+                  <input
+                    {...register("password")}
+                    type={showPassword ? "text" : "password"}
+                    className="text-sm border border-white/50 p-3 rounded-xs bg-transparent w-full"
+                    placeholder="숫자 4자리를 입력해 주세요"
+                  />
+                  <button
+                    className="absolute inset-y-0 right-3 flex items-center cursor-pointer"
+                    onClick={togglePasswordVisibility}
+                  >
+                    {showPassword ? (
+                      <Eye className="size-5 text-white/50" />
+                    ) : (
+                      <EyeOff className="size-5 text-white/50" />
+                    )}
+                  </button>
+                </div>
+                {touchedFields.password && errors.password && (
+                  <p className="text-xs text-red-500">
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
-              {touchedFields.password && errors.password && (
-                <p className="text-xs text-red-500">
-                  {errors.password.message}
-                </p>
-              )}
             </div>
 
             {/* 호스트 통제 */}
