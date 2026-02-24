@@ -3,7 +3,8 @@ import z from "zod";
 export const partySchema = z.object({
   name: z
     .string()
-    .min(1, "파티 이름을 입력해주세요")
+    .trim()
+    .min(1, "파티 이름은 필수입니다")
     .max(20, "파티 이름은 20자를 초과할 수 없습니다."),
   password: z
     .string()
