@@ -21,6 +21,7 @@ import UnauthenticatedRoutes from "./UnauthenticatedRoutes";
 import WebSocketProvider from "../components/partyroom/WebSocketProvider";
 import PartyPage from "../pages/PartyPage";
 import Step1InputEmail from "../components/signup/step/Step1InputEmail";
+import PendingPaymentPage from "../pages/PendingPaymentPage";
 
 const routes = createBrowserRouter(
   createRoutesFromElements(
@@ -41,7 +42,7 @@ const routes = createBrowserRouter(
         </Route>
         <Route element={<AuthenticatedRoutes />}>
           {/* Onboarding for PENDING users */}
-          <Route path="/signup" element={<SignupPage />}>
+          <Route path="/signup" element={<PendingPaymentPage />}>
             <Route
               path="/signup/step4-list-membership"
               element={<Step4ListMembership />}
