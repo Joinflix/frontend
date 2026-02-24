@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import apiClient from "../axios";
 import { FALLBACK_ERROR_MESSAGE } from "../../global/const/error";
+import { delay } from "../../utils/delay";
 
 interface RequestCodeParams {
   email: string;
@@ -14,7 +15,10 @@ export function useRequestVerificationCode({
 }: RequestCodeParams) {
   return useMutation({
     mutationFn: async () => {
-      const res = await apiClient.post("/auth/email-send", { email });
+      const [res] = await Promise.all([
+        apiClient.post("/auth/email-send", { email }),
+        delay(400),
+      ]);
       return res.data;
     },
     onSuccess: () => {

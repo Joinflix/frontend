@@ -14,15 +14,17 @@ interface PlanProps {
 const Plan = ({ plan, onSelect }: PlanProps) => {
   return (
     <div
-      className="border border-gray-300 p-2 rounded-lg cursor-pointer hover:scale-107 transition-transform"
+      className="border border-gray-300 p-2 rounded-lg cursor-pointer hover:scale-107 transition-transform min-w-45"
       onClick={() => onSelect(plan.membershipId, plan.amount, plan.planName)}
     >
       {/* color block */}
       <div
-        className={`bg-gradient-to-br ${plan.gradient} text-white rounded-sm p-2 px-3 pb-7`}
+        className={`bg-gradient-to-br ${plan.gradient} text-white rounded-sm px-3 py-5 flex items-center justify-center`}
       >
-        <span className="text-sm">{plan.planName}</span>
-        <span className="text-sm"> {plan.amount} </span>
+        <span className="text-sm font-bold [text-shadow:_0_1px_4px_rgb(0_0_0_/_40%)]">
+          {" "}
+          {plan.planName} {plan.amount}
+        </span>
       </div>
 
       {/* features */}

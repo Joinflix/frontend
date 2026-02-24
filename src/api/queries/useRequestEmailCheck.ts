@@ -18,7 +18,7 @@ export function useRequestEmailCheck({
     mutationFn: async () => {
       const [res] = await Promise.all([
         apiClient.post("/auth/email-duplicate", { email }),
-        delay(200),
+        delay(400),
       ]);
       return res.data;
     },

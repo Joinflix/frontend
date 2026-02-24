@@ -37,26 +37,37 @@ const Step1InputEmail = () => {
 
   return (
     <div>
-      <div className="w-full max-w-md mt-10 flex flex-col gap-y-5">
-        {/*1. icon */}
-        <div className="flex flex-row items-center">
-          <Mail className="size-15 stroke-[#816BFF] stroke-1" />
+      <div className="w-full max-w-md mt-50 flex flex-col gap-y-5">
+        {/* Header Container */}
+        <div className="flex items-center gap-x-4">
+          {/* 1. The Icon */}
+          <div className="flex shrink-0 items-center justify-center size-14 rounded-full bg-[#816BFF]/10">
+            <Mail className="size-7 stroke-[#816BFF] stroke-[1.5]" />
+          </div>
+
+          {/* 2. Text Content Stack */}
+          <div className="flex flex-col justify-center">
+            <div className="text-sm text-black">
+              <span className="tracking-wider">
+                <strong className="text-black">1</strong>/<strong>3</strong>
+                단계
+              </span>
+            </div>
+
+            <h1 className="text-3xl font-semibold leading-tight tracking-tight">
+              이메일 입력
+            </h1>
+          </div>
         </div>
 
         {/*2. step content */}
         <div>
-          <div className="text-sm">
-            <span>
-              <strong>1</strong>/<strong>3</strong>단계
-            </span>
-          </div>
-          <div>
-            <h1 className="text-3xl font-semibold leading-snug tracking-wide">
-              이메일 입력
-            </h1>
-          </div>
           <div className="mt-3 font-light">
-            <span>사용할 이메일 계정을 입력해주세요.</span>
+            <span>
+              <span className="font-semibold tracking-wide">Joinflix</span>
+              에서 사용할 <span className="font-bold">이메일 계정</span>을
+              입력해주세요.
+            </span>
           </div>
         </div>
 
@@ -77,9 +88,9 @@ const Step1InputEmail = () => {
           </div>
 
           {/*3. button */}
-          <div className="w-full max-w-md mt-2 mb-10">
+          <div className="w-full max-w-md mt-2 mb-60">
             <button
-              className={`text-white rounded-[0.2rem] w-full flex items-center justify-center py-3 transition
+              className={`text-white text-lg font-bold rounded-[0.2rem] w-full flex items-center justify-center py-3 transition
               ${
                 !isValid || isPending
                   ? "bg-gray-400 cursor-not-allowed"

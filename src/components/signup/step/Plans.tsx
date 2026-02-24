@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import Plan from "./Plan";
 import { useAuthStore } from "../../../store/useAuthStore";
 import apiClient from "../../../api/axios";
+import { useNavigate } from "react-router";
 
 declare global {
   interface Window {
@@ -18,7 +19,10 @@ const planData = [
     description:
       "광고와 함께 즐기는 합리적인 가격의 플랜입니다. 일부 콘텐츠 제외.",
     features: [
+      { title: "요금", description: "100원" },
       { title: "해상도", description: "1080p" },
+      { title: "동시 시청", description: "2명" },
+      { title: "동시 시청", description: "2명" },
       { title: "동시 시청", description: "2명" },
     ],
   },
@@ -30,8 +34,11 @@ const planData = [
     description:
       "무광고로 즐기는 표준 플랜입니다. 두 대의 기기에서 동시 시청 가능.",
     features: [
+      { title: "요금", description: "200원" },
       { title: "해상도", description: "1080p" },
-      { title: "동시 시청", description: "2명" },
+      { title: "동시 시청", description: "3명" },
+      { title: "동시 시청", description: "3명" },
+      { title: "동시 시청", description: "3명" },
     ],
   },
   {
@@ -42,13 +49,17 @@ const planData = [
     description:
       "최고의 화질과 공간 음향을 제공합니다. 최대 4대 기기 동시 시청.",
     features: [
+      { title: "요금", description: "300원" },
       { title: "해상도", description: "4K + HDR" },
+      { title: "동시 시청", description: "4명" },
+      { title: "동시 시청", description: "4명" },
       { title: "동시 시청", description: "4명" },
     ],
   },
 ];
 
 export const Plans = ({ onSuccess }: { onSuccess: () => void }) => {
+  const navigate = useNavigate();
   const email = useAuthStore((state) => state.user?.email);
 
   // 포트원 스크립트 로딩
@@ -100,7 +111,7 @@ export const Plans = ({ onSuccess }: { onSuccess: () => void }) => {
             status: "paid",
           });
 
-          alert("결제 완료!");
+          navigate("/browsing", { replace: true });
           onSuccess();
         } catch (err) {
           console.error("Payment sync error:", err);
@@ -111,7 +122,7 @@ export const Plans = ({ onSuccess }: { onSuccess: () => void }) => {
   };
 
   return (
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-3 gap-5 w-full mx-auto">
       {planData.map((plan) => (
         <Plan key={plan.name} plan={plan} onSelect={handleRequestPay} />
       ))}
