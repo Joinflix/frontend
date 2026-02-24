@@ -134,7 +134,7 @@ export const AlertDropdown = ({
                           icon={UserRoundPlus}
                           iconSize={12}
                           variantClassName={`${BASE_STYLE} bg-emerald-500/20 border-emerald-500/30 text-emerald-500 hover:bg-emerald-600 transition-colors`}
-                          onClick={() => handleClickAcceptFriend(noti.id)}
+                          onClick={() => handleClickAcceptFriend(noti.eventId)}
                         />
                         {/* 거절 */}
                         <ActionButton
@@ -142,7 +142,7 @@ export const AlertDropdown = ({
                           icon={UserRoundX}
                           iconSize={12}
                           variantClassName={`${BASE_STYLE}  bg-rose-500/20 border-rose-500/30 text-rose-500 hover:bg-rose-600 transition-colors`}
-                          onClick={() => handleClickRefuseFriend(noti.id)}
+                          onClick={() => handleClickRefuseFriend(noti.eventId)}
                         />
                       </div>
                     )}
