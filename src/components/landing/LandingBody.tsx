@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router";
-import { TypingAnimation } from "../ui/typing-animation";
 import { useForm } from "react-hook-form";
 import { type EmailForm, emailSchema } from "../../schemas/emailSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRequestEmailCheck } from "../../api/queries/useRequestEmailCheck";
+import { TypingAnimation } from "../ui/typing-animation";
 
 const LandingBody = () => {
   const navigate = useNavigate();
@@ -36,7 +36,7 @@ const LandingBody = () => {
 
   return (
     <>
-      <div className="mt-30 mb-25 flex flex-col items-center text-white py-10">
+      <div className="mt-40 mb-40 flex flex-col items-center text-white py-10">
         {/* CTA */}
         <div className="text-center space-y-2">
           <div>
