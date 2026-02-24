@@ -16,6 +16,7 @@ export const useFriendActions = (
       const res = await apiClient.post("/friends/requests", { receiverId });
       return res.data;
     },
+    onSuccess: invalidateUsers,
     onError: (err, receiverId) => {
       setPendingRequestIds?.((prev) => {
         const next = new Set(prev);

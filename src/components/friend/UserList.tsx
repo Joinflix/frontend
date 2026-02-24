@@ -18,7 +18,7 @@ const UserList = ({ user, onRequest, onRemove, onAccept, onRefuse }: any) => (
       </div>
       <div className="flex flex-col">
         <span className="text-sm text-zinc-100 font-semibold">
-          {user.nickName}
+          {user.nickname}
         </span>
         <span className="text-xs text-zinc-500">{user.email}</span>
       </div>

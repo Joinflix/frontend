@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import apiClient from "../axios";
 import { FALLBACK_ERROR_MESSAGE } from "../../global/const/error";
+import { delay } from "../../utils/delay";
 
 interface VerifyCodeParams {
   email: string;
@@ -11,10 +12,13 @@ interface VerifyCodeParams {
 export function useVerifyCode({ email, onSuccess, onError }: VerifyCodeParams) {
   return useMutation({
     mutationFn: async (code: string) => {
-      const res = await apiClient.post("/auth/email-verify", {
-        email,
-        code,
-      });
+      const [res] = await Promise.all([
+        apiClient.post("/auth/email-verify", {
+          email,
+          code,
+        }),
+        delay(200),
+      ]);
       return res.data;
     },
     onSuccess: () => {

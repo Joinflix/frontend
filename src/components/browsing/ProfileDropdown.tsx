@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,10 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { LogOut, MessageCircleQuestionMark, UserRoundCog } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
-import apiClient from "../../api/axios";
-import { useNavigate } from "react-router";
-import { useAuthStore } from "../../store/useAuthStore";
+import { useSignout } from "../../api/queries/useSignout";
 
 const ICON_STYLE = "text-white group-hover:text-black";
 
@@ -19,7 +15,7 @@ interface ProfileDropdownProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   iconStyle: string;
-  initial: string;
+  initial: string | undefined;
 }
 
 export const ProfileDropdown = ({
@@ -28,26 +24,10 @@ export const ProfileDropdown = ({
   iconStyle,
   initial,
 }: ProfileDropdownProps) => {
-  const navigate = useNavigate();
-  const { clearAuth } = useAuthStore();
-
-  const { mutate } = useMutation({
-    mutationKey: ["signout"],
-    mutationFn: async () => {
-      const res = await apiClient.post("/auth/logout");
-      return res.data;
-    },
-    onSuccess: () => {
-      clearAuth();
-      navigate("/");
-    },
-    onError: () => {
-      alert("error signing out");
-    },
-  });
+  const { mutate: signout } = useSignout();
 
   const handleClickSignout = () => {
-    mutate();
+    signout();
   };
 
   return (

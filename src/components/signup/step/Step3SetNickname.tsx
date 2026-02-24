@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleCheck, CircleX, IdCard } from "lucide-react";
+import { CircleCheck, CircleX, IdCard, OctagonX } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router";
 import {
@@ -100,24 +100,31 @@ const Step3SetNickname = () => {
 
   return (
     <div>
-      <div className="w-full max-w-md mt-10 flex flex-col gap-y-5">
-        {/*1. icon */}
-        <div className="flex flex-row items-center">
-          <IdCard className="size-15 stroke-[#816BFF] stroke-1" />
+      <div className="w-full max-w-md mt-40 flex flex-col gap-y-5">
+        {/* Header Container */}
+        <div className="flex items-center gap-x-4">
+          {/* 1. The Icon */}
+          <div className="flex shrink-0 items-center justify-center size-14 rounded-full bg-[#816BFF]/10">
+            <IdCard className="size-7 stroke-[#816BFF] stroke-[1.5]" />
+          </div>
+
+          {/* 2. Text Content Stack */}
+          <div className="flex flex-col justify-center">
+            <div className="text-sm text-black">
+              <span className="tracking-wider">
+                <strong className="text-black">3</strong>/<strong>3</strong>
+                단계
+              </span>
+            </div>
+
+            <h1 className="text-3xl font-semibold leading-tight tracking-tight">
+              닉네임 설정
+            </h1>
+          </div>
         </div>
 
         {/*2. step content */}
         <div>
-          <div className="text-sm">
-            <span>
-              <strong>3</strong>/<strong>3</strong>단계
-            </span>
-          </div>
-          <div>
-            <h1 className="text-3xl font-semibold leading-snug tracking-wide">
-              닉네임 설정
-            </h1>
-          </div>
           <div className="mt-3 font-light">
             <span>아래의 이메일 계정과 함께 사용할 닉네임을 입력해주세요.</span>
           </div>
@@ -136,35 +143,35 @@ const Step3SetNickname = () => {
                 className="w-full px-3 pr-10 border border-[#816BFF] bg-[#816BFF]/10 rounded-xs py-2.5"
                 placeholder="닉네임(3자 이상 30자 이하)"
               />
-              <button className="absolute inset-y-0 right-3 flex items-center cursor-pointer">
-                {nickname &&
-                  (isCheckingNickname ? (
-                    <Spinner className="size-5" />
-                  ) : isValidNickname === true ? (
-                    <CircleCheck className={ICON_CLASSNAME} />
-                  ) : isValidNickname === false ? (
-                    <CircleX className={`${ICON_CLASSNAME} stroke-red-500`} />
-                  ) : null)}
-              </button>
             </div>
+
+            {errors.nickname && (
+              <p className="text-red-500 text-sm mt-1 flex gap-1 items-center">
+                <OctagonX className="size-4" />
+                {errors.nickname.message}
+              </p>
+            )}
+
             {!errors.nickname && isValidNickname === false && (
-              <p className="text-red-500 text-sm mt-1">
+              <p className="text-red-500 text-sm mt-1 flex gap-1 items-center">
+                <OctagonX className="size-4" />
                 이미 사용 중인 닉네임입니다.
               </p>
             )}
 
             {!errors.nickname && isValidNickname === true && (
-              <p className="text-[#816BFF] text-sm mt-1">
+              <p className="text-[#816BFF] text-sm mt-1 flex gap-1 items-center">
+                <CircleCheck className="size-4" />
                 사용 가능한 닉네임입니다.
               </p>
             )}
           </div>
 
           {/*3. button */}
-          <div className="w-full max-w-md mt-2 mb-10">
+          <div className="w-full max-w-md mt-2 mb-30">
             <button
               disabled={!canSubmit || isPending}
-              className={`text-white text-xl rounded-[0.2rem] w-full flex items-center justify-center py-3 transition
+              className={`text-white text-xl font-bold rounded-[0.2rem] w-full flex items-center justify-center py-3 transition
               ${
                 !canSubmit || isPending
                   ? "bg-gray-400 cursor-not-allowed"
@@ -180,10 +187,10 @@ const Step3SetNickname = () => {
                 </span>
               ) : isValid ? (
                 <span className="inline-flex items-center gap-2">
-                  회원 가입
+                  회원 가입 완료
                 </span>
               ) : (
-                "회원 가입"
+                "회원 가입 완료"
               )}
             </button>
           </div>

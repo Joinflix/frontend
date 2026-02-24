@@ -20,6 +20,8 @@ import AuthenticatedRoutes from "./AuthenticatedRoutes";
 import UnauthenticatedRoutes from "./UnauthenticatedRoutes";
 import WebSocketProvider from "../components/partyroom/WebSocketProvider";
 import PartyPage from "../pages/PartyPage";
+import Step1InputEmail from "../components/signup/step/Step1InputEmail";
+import PendingPaymentPage from "../pages/PendingPaymentPage";
 
 const routes = createBrowserRouter(
   createRoutesFromElements(
@@ -31,18 +33,26 @@ const routes = createBrowserRouter(
             <Route index element={<PasswordSignin />} />
           </Route>
           <Route path="/signup" element={<SignupPage />}>
+            <Route path="step1-input-email" element={<Step1InputEmail />} />
             <Route path="step1-send-code" element={<Step1SendCode />} />
             <Route path="step1-confirm-code" element={<Step1ConfirmCode />} />
             <Route path="step2-set-password" element={<Step2SetPassword />} />
             <Route path="step3-set-nickname" element={<Step3SetNickname />} />
-            <Route
-              path="step4-list-membership"
-              element={<Step4ListMembership />}
-            />
-            <Route path="step4-select-plan" element={<Step4SelectPlan />} />
           </Route>
         </Route>
         <Route element={<AuthenticatedRoutes />}>
+          {/* Onboarding for PENDING users */}
+          <Route path="/signup" element={<PendingPaymentPage />}>
+            <Route
+              path="/signup/step4-list-membership"
+              element={<Step4ListMembership />}
+            />
+            <Route
+              path="/signup/step4-select-plan"
+              element={<Step4SelectPlan />}
+            />
+          </Route>
+          {/* Fully active users */}
           <Route path="/browsing" element={<BrowsingPage />} />,
           <Route path="/party" element={<PartyPage />} />,
           <Route element={<WebSocketProvider />}>

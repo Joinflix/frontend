@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import VoiceVisualizer from "./VoiceVisualizer";
+import type { PartyData } from "../../../types/party";
 
 interface RemoteUser {
   stream: MediaStream;
@@ -26,7 +27,7 @@ interface ChatWindowProps {
   onSendMessage: (text: string) => void;
   isVoiceActive: boolean;
   onToggleVoice: () => void;
-  queryPartyData: any;
+  partyData: PartyData;
   currentCount: number;
   remoteUsers: { [nickname: string]: RemoteUser };
   setRemoteUsers: React.Dispatch<
@@ -42,10 +43,10 @@ const USER_COLORS = [
   "text-orange-400",
 ];
 
-const ChatWindow = ({
+const OldChatWindow = ({
   messages,
   onSendMessage,
-  queryPartyData,
+  partyData,
   currentCount,
   isVoiceActive,
   onToggleVoice,
@@ -81,6 +82,34 @@ const ChatWindow = ({
     return userColorMap.get(sender)!;
   };
 
+  const RemoteAudio = ({
+    stream,
+    volume,
+  }: {
+    stream: MediaStream;
+    volume: number;
+  }) => {
+    const audioRef = useRef<HTMLAudioElement>(null);
+
+    useEffect(() => {
+      if (audioRef.current && stream) {
+        audioRef.current.srcObject = stream;
+        // Explicitly play to handle browser autoplay policies
+        audioRef.current.play().catch((err) => {
+          console.error("Audio play blocked or failed:", err);
+        });
+      }
+    }, [stream]);
+
+    useEffect(() => {
+      if (audioRef.current) {
+        audioRef.current.volume = volume;
+      }
+    }, [volume]);
+
+    return <audio ref={audioRef} autoPlay playsInline />;
+  };
+
   return (
     <>
       <div className="flex flex-col min-w-84 max-w-84 bg-zinc-900">
@@ -88,7 +117,7 @@ const ChatWindow = ({
         <div className="flex flex-col pt-3">
           {/* 파티룸 이름, 영화 제목 */}
           <div className="text-center text-white text-base">
-            {queryPartyData?.roomName}
+            {partyData?.roomName}
           </div>
           {/* 참여 인원 */}
           <div className="flex flex-row text-white/70 items-center justify-center gap-1">
@@ -104,7 +133,7 @@ const ChatWindow = ({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-white font-medium truncate">
-                  {queryPartyData?.hostNickname}
+                  {partyData?.hostNickname}
                 </p>
                 <p className="text-[10px] text-zinc-500">Party Host</p>
               </div>
@@ -185,16 +214,7 @@ const ChatWindow = ({
                     )}
                   </div>
 
-                  {/* Individual Audio Node */}
-                  <audio
-                    autoPlay
-                    ref={(el) => {
-                      if (el) {
-                        el.srcObject = data.stream;
-                        el.volume = data.volume;
-                      }
-                    }}
-                  />
+                  <RemoteAudio stream={data.stream} volume={data.volume} />
 
                   {/* Volume Slider */}
                   <div className="flex items-center gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
@@ -303,4 +323,4 @@ const ChatWindow = ({
   );
 };
 
-export default ChatWindow;
+export default OldChatWindow;

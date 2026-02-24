@@ -1,4 +1,4 @@
-import { CircleCheck } from "lucide-react";
+import { Gem } from "lucide-react";
 import { useNavigate } from "react-router";
 import CheckList from "./CheckList";
 
@@ -16,24 +16,30 @@ const Step4ListMembership = () => {
 
   return (
     <div>
-      <div className="w-full max-w-md mt-10 flex flex-col gap-y-5">
-        {/*1. icon */}
-        <div className="flex flex-row items-center">
-          <CircleCheck className="size-15 stroke-[#816BFF] stroke-[0.8]" />
+      <div className="w-full max-w-md mt-40 flex flex-col gap-y-5">
+        {/* Header Container */}
+        <div className="flex items-center gap-x-4">
+          {/* 1. The Icon */}
+          <div className="flex shrink-0 items-center justify-center size-14 rounded-full bg-[#816BFF]/10">
+            <Gem className="size-7 stroke-[#816BFF] stroke-[1.5]" />
+          </div>
+
+          {/* 2. Text Content Stack */}
+          <div className="flex flex-col justify-center">
+            <div className="text-sm text-black">
+              <span className="tracking-tight">
+                <strong className="text-black">최종 단계</strong>
+              </span>
+            </div>
+
+            <h1 className="text-3xl font-semibold leading-tight tracking-tight">
+              멤버십 선택
+            </h1>
+          </div>
         </div>
 
         {/*2. step content */}
         <div>
-          <div className="text-sm">
-            <span>
-              <strong>2</strong>/<strong>3</strong>단계
-            </span>
-          </div>
-          <div>
-            <h1 className="text-3xl font-semibold leading-snug tracking-wide">
-              멤버십 선택
-            </h1>
-          </div>
           <div className="mt-3 font-light flex flex-col gap-y-3">
             {CHECK_LIST_DATA.map((element, index) => (
               <CheckList key={index} item={element} />
@@ -42,7 +48,7 @@ const Step4ListMembership = () => {
         </div>
 
         {/*3. button */}
-        <div className="w-full max-w-md mt-2 mb-10">
+        <div className="w-full max-w-md mt-2 mb-40">
           <button
             className="bg-[#816BFF] cursor-pointer hover:bg-[#5e42c8] text-white text-xl rounded-[0.2rem] w-full flex items-center justify-center py-3"
             onClick={handleClickButton}

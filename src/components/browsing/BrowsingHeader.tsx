@@ -27,7 +27,7 @@ const BrowsingHeader = () => {
   const { requestFriend, removeFriend, acceptFriend, refuseFriend } =
     useFriendActions(setPendingRequestIds);
 
-  const nickname = useAuthStore((state) => state.user?.nickName);
+  const nickname = useAuthStore((state) => state.user?.nickname);
 
   const handleClickFriendSearch = () => {
     setIsFriendSearchOpen(true);

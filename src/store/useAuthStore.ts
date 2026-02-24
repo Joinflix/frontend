@@ -2,11 +2,14 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { jwtDecode } from "jwt-decode";
 
+export type UserStatus = "PENDING" | "ACTIVE" | "SUSPENDED" | "WITHDRAWN";
+
 type JwtPayload = {
   sub: string;
   email: string;
   role: string;
-  nickName: string;
+  nickname: string;
+  status: UserStatus;
   iat: number;
   exp: number;
 };
@@ -19,11 +22,12 @@ type AuthState = {
   clearAuth: () => void;
 };
 
-type User = {
+export type User = {
   userId: number;
   email: string;
   role: string;
-  nickName: string;
+  nickname: string;
+  status: UserStatus;
 };
 
 export const useAuthStore = create<AuthState>()(
@@ -45,7 +49,8 @@ export const useAuthStore = create<AuthState>()(
             userId: Number(decoded.sub),
             email: decoded.email,
             role: decoded.role,
-            nickName: decoded.nickName,
+            nickname: decoded.nickname,
+            status: decoded.status,
           };
 
           set({
