@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleCheck, CircleX, IdCard } from "lucide-react";
+import { CircleCheck, CircleX, IdCard, OctagonX } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router";
 import {
@@ -143,32 +143,25 @@ const Step3SetNickname = () => {
                 className="w-full px-3 pr-10 border border-[#816BFF] bg-[#816BFF]/10 rounded-xs py-2.5"
                 placeholder="닉네임(3자 이상 30자 이하)"
               />
-              <button className="absolute inset-y-0 right-3 flex items-center cursor-pointer">
-                {nickname &&
-                  (isCheckingNickname ? (
-                    <Spinner className="size-5" />
-                  ) : isValidNickname === true ? (
-                    <CircleCheck className={ICON_CLASSNAME} />
-                  ) : isValidNickname === false ? (
-                    <CircleX className={`${ICON_CLASSNAME} stroke-red-500`} />
-                  ) : null)}
-              </button>
             </div>
 
             {errors.nickname && (
-              <p className="text-red-500 text-sm mt-1">
+              <p className="text-red-500 text-sm mt-1 flex gap-1 items-center">
+                <OctagonX className="size-4" />
                 {errors.nickname.message}
               </p>
             )}
 
             {!errors.nickname && isValidNickname === false && (
-              <p className="text-red-500 text-sm mt-1">
+              <p className="text-red-500 text-sm mt-1 flex gap-1 items-center">
+                <OctagonX className="size-4" />
                 이미 사용 중인 닉네임입니다.
               </p>
             )}
 
             {!errors.nickname && isValidNickname === true && (
-              <p className="text-[#816BFF] text-sm mt-1">
+              <p className="text-[#816BFF] text-sm mt-1 flex gap-1 items-center">
+                <CircleCheck className="size-4" />
                 사용 가능한 닉네임입니다.
               </p>
             )}

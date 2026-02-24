@@ -3,7 +3,7 @@ import { signinSchema, type SigninForm } from "../../../schemas/signinSchema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, OctagonX } from "lucide-react";
 import { useRequestSignin } from "../../../api/queries/useRequestSignin";
 import { useAuthStore } from "../../../store/useAuthStore";
 import { removeBearerHeader } from "../../../utils/removeBearerHeader";
@@ -66,7 +66,8 @@ const PasswordSignin = () => {
               placeholder="이메일 주소"
             />
             {errors.email && (
-              <p className="text-red-500 text-sm mt-1">
+              <p className="text-red-500 text-sm mt-1.5 flex gap-1 items-center">
+                <OctagonX className="size-4" />
                 {errors.email.message}
               </p>
             )}
@@ -94,7 +95,8 @@ const PasswordSignin = () => {
 
             {/* 비밀번호 입력 에러 메시지 */}
             {errors.password && (
-              <p className="text-red-500 text-sm mt-1">
+              <p className="text-red-500 text-sm mt-1.5 flex gap-1 items-center">
+                <OctagonX className="size-4" />
                 {errors.password.message}
               </p>
             )}
@@ -111,6 +113,16 @@ const PasswordSignin = () => {
           >
             {isPending ? "로그인 중..." : "로그인"}
           </button>
+
+          <div className="flex justify-center gap-2 mt-4 text-sm">
+            <span className="text-white/60">아직 계정이 없으신가요?</span>
+            <button
+              onClick={() => navigate("/signup/step1-input-email")}
+              className="text-[#816BFF] font-bold hover:underline cursor-pointer"
+            >
+              회원가입하기
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { Eye, EyeOff, KeyRound } from "lucide-react";
+import { Eye, EyeOff, KeyRound, OctagonX } from "lucide-react";
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import {
@@ -117,38 +117,42 @@ const Step2SetPassword = () => {
 
               {/* 비밀번호 입력 에러 메시지 */}
               {errors.password && (
-                <p className="text-red-500 text-sm mt-1">
+                <p className="text-red-500 text-sm flex gap-1 mt-1 items-center">
+                  <OctagonX className="size-4" />
                   {errors.password.message}
                 </p>
               )}
             </div>
 
             {/* 비밀번호 확인 입력 */}
-            <div className="relative w-full max-w-md">
-              <input
-                {...register("confirmPassword")}
-                type={showPassword ? "text" : "password"}
-                className="w-full px-3 pr-10 border border-[#816BFF] bg-[#816BFF]/10 rounded-xs py-2.5"
-                placeholder="비밀번호 확인"
-              />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-3 flex items-center cursor-pointer"
-                onClick={togglePasswordVisibility}
-              >
-                {showPassword ? (
-                  <Eye className="size-5 stroke-[#816BFF]" />
-                ) : (
-                  <EyeOff className="size-5 stroke-[#816BFF]" />
-                )}
-              </button>
+            <div className="flex flex-col">
+              <div className="relative w-full max-w-md">
+                <input
+                  {...register("confirmPassword")}
+                  type={showPassword ? "text" : "password"}
+                  className="w-full px-3 pr-10 border border-[#816BFF] bg-[#816BFF]/10 rounded-xs py-2.5"
+                  placeholder="비밀번호 확인"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-3 flex items-center cursor-pointer"
+                  onClick={togglePasswordVisibility}
+                >
+                  {showPassword ? (
+                    <Eye className="size-5 stroke-[#816BFF]" />
+                  ) : (
+                    <EyeOff className="size-5 stroke-[#816BFF]" />
+                  )}
+                </button>
+              </div>
+              {/* 비밀번호 확인 입력 에러 메시지 */}
+              {errors.confirmPassword && (
+                <p className="text-red-500 text-sm flex gap-1 mt-1 items-center">
+                  <OctagonX className="size-4" />
+                  {errors.confirmPassword.message}
+                </p>
+              )}
             </div>
-            {/* 비밀번호 확인 입력 에러 메시지 */}
-            {errors.confirmPassword && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.confirmPassword.message}
-              </p>
-            )}
           </div>
         </div>
 

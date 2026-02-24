@@ -4,6 +4,7 @@ import { type EmailForm, emailSchema } from "../../schemas/emailSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRequestEmailCheck } from "../../api/queries/useRequestEmailCheck";
 import { TypingAnimation } from "../ui/typing-animation";
+import { OctagonX } from "lucide-react";
 
 const LandingBody = () => {
   const navigate = useNavigate();
@@ -68,7 +69,8 @@ const LandingBody = () => {
               placeholder="이메일 주소"
             />
             {errors.email && (
-              <p className="text-red-500 text-xs pl-3">
+              <p className="text-red-500 text-xs mt-1 flex gap-1 items-center">
+                <OctagonX className="size-3" />
                 {errors.email.message}
               </p>
             )}

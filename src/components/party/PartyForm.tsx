@@ -7,7 +7,7 @@ import type {
 import type { PartyFormValues } from "../../schemas/partySchema";
 import type { PartyType } from "../../types/party";
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, OctagonX } from "lucide-react";
 
 interface PartyFormProps {
   partyType: PartyType;
@@ -41,10 +41,13 @@ const PartyForm = ({
           <input
             {...register("name")}
             className="text-sm border border-white/50 p-3 rounded-xs bg-transparent"
-            placeholder="다른 사람들에게 보여질 파티 이름이에요"
+            placeholder="최소 1자, 최대 20자"
           />
           {touchedFields.name && errors.name && (
-            <p className="text-xs text-red-500">{errors.name.message}</p>
+            <p className="text-red-500 text-sm flex gap-1 items-center">
+              <OctagonX className="size-4" />
+              {errors.name.message}
+            </p>
           )}
         </div>
 
@@ -74,7 +77,8 @@ const PartyForm = ({
                   </button>
                 </div>
                 {touchedFields.password && errors.password && (
-                  <p className="text-xs text-red-500">
+                  <p className="text-red-500 text-sm flex mt-2 gap-1 items-center">
+                    <OctagonX className="size-4" />
                     {errors.password.message}
                   </p>
                 )}

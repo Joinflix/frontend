@@ -1,4 +1,4 @@
-import { Mail } from "lucide-react";
+import { Mail, OctagonX } from "lucide-react";
 import { useRequestEmailCheck } from "../../../api/queries/useRequestEmailCheck";
 import { useForm } from "react-hook-form";
 import { emailSchema, type EmailForm } from "../../../schemas/emailSchema";
@@ -81,7 +81,8 @@ const Step1InputEmail = () => {
               />
             </div>
             {errors.email && (
-              <p className="text-red-500 text-sm mt-1">
+              <p className="text-red-500 text-sm mt-1 flex gap-1 items-center">
+                <OctagonX className="size-4" />
                 {errors.email.message}
               </p>
             )}
