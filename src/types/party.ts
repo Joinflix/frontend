@@ -14,6 +14,7 @@ export interface VideoSyncMessage {
   paused: boolean;
   action: "PLAY" | "PAUSE" | "SEEK";
   senderId: number | undefined;
+  originalSenderId: number | undefined;
 }
 
 //PartyRoomResponse(BE)
