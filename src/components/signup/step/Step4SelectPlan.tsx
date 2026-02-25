@@ -23,7 +23,7 @@ export const Step4SelectPlan = () => {
               </span>
             </div>
 
-            <h1 className="text-3xl font-semibold leading-tight tracking-tight">
+            <h1 className="text-2xl font-semibold leading-tight tracking-tight">
               원하는 멤버십을 선택하세요
             </h1>
           </div>

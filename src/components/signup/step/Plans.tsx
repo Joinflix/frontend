@@ -13,7 +13,7 @@ declare global {
 const planData = [
   {
     membershipId: 1,
-    planName: "광고형 스탠다드",
+    planName: "광고형",
     amount: 100,
     gradient: "from-indigo-300 to-[#5e42c8]",
     description:
