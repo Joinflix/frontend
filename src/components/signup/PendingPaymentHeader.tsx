@@ -1,15 +1,24 @@
+import { useNavigate } from "react-router";
 import { useSignout } from "../../api/queries/useSignout";
 
 const PendingPaymentHeader = () => {
   const { mutate: signout } = useSignout();
+  const navigate = useNavigate();
 
   const handleClickSignout = () => {
     signout();
   };
 
+  const handleClickLogo = () => {
+    navigate("/browsing");
+  };
+
   return (
     <header className="flex flex-row justify-between py-5 px-8">
-      <div className="text-[#816BFF] font-extrabold text-xl uppercase tracking-wide cursor-default">
+      <div
+        className="text-[#816BFF] font-extrabold text-xl uppercase tracking-wide cursor-pointer"
+        onClick={handleClickLogo}
+      >
         joinflix
       </div>
       <button

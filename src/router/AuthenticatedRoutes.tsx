@@ -22,10 +22,6 @@ const AuthenticatedRoutes = () => {
 
   const isOnboardingRoute = location.pathname.startsWith("/signup/step4");
 
-  if (userStatus === "PENDING" && !isOnboardingRoute) {
-    return <Navigate to="/signup/step4-list-membership" replace />;
-  }
-
   if (userStatus === "ACTIVE" && isOnboardingRoute) {
     return <Navigate to="/browsing" replace />;
   }
