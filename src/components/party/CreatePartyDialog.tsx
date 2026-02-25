@@ -138,7 +138,9 @@ const CreatePartyDialog = ({
       joinParty({ partyId, passCode: variables.passCode });
     },
     onError: (error) => {
-      console.error("Failed to create party", error);
+      alert(error.response?.data?.message);
+      if (error.response?.data?.code === "MEMBERSHIP_REQUIRED")
+        navigate("/signup/step4-list-membership");
     },
   });
 
