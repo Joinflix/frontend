@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleCheck, CircleX, IdCard, OctagonX } from "lucide-react";
+import { CircleCheck, IdCard, OctagonX } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router";
 import {
@@ -12,10 +12,13 @@ import { useRequestNicknameCheck } from "../../../api/queries/useRequestNickname
 import { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import apiClient from "../../../api/axios";
+import { useAuthStore } from "../../../store/useAuthStore";
 
 const ICON_CLASSNAME = "size-5 stroke-[#816BFF]";
 
 const Step3SetNickname = () => {
+  const { setAuth } = useAuthStore();
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -71,11 +74,14 @@ const Step3SetNickname = () => {
     email,
     password,
     nickname,
-    onSuccess: () => {
-      mutateAsyncSignin().then(() => {
+    onSuccess: async () => {
+      try {
+        await mutateAsyncSignin();
         alert("성공적으로 가입을 완료하였습니다.");
         navigate("/signup/step4-list-membership", { replace: true });
-      });
+      } catch (error) {
+        console.error("Login failed after signup", error);
+      }
     },
   });
 
@@ -87,6 +93,15 @@ const Step3SetNickname = () => {
           email,
           password,
         });
+
+        const authHeader = res.headers["authorization"];
+        if (!authHeader) {
+          throw new Error("No Authorization header found");
+        }
+        const token = authHeader.replace("Bearer ", "");
+
+        setAuth(token);
+
         return res.data;
       },
     });

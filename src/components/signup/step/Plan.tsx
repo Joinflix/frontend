@@ -21,9 +21,8 @@ const Plan = ({ plan, onSelect }: PlanProps) => {
       <div
         className={`bg-gradient-to-br ${plan.gradient} text-white rounded-sm px-3 py-5 flex items-center justify-center`}
       >
-        <span className="text-sm font-bold [text-shadow:_0_1px_4px_rgb(0_0_0_/_40%)]">
-          {" "}
-          {plan.planName} {plan.amount}
+        <span className="text-2xl font-bold [text-shadow:0_1px_4px_rgb(0_0_0/40%)]">
+          {plan.planName}
         </span>
       </div>
 
