@@ -111,8 +111,9 @@ export const Plans = ({ onSuccess }: { onSuccess: () => void }) => {
             status: "paid",
           });
 
-          navigate("/browsing", { replace: true });
           onSuccess();
+          alert("멤버십 등록이 완료되었습니다.");
+          navigate("/browsing", { replace: true });
         } catch (err) {
           console.error("Payment sync error:", err);
           alert("서버 결제 검증 실패");
