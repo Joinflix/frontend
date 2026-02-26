@@ -293,7 +293,10 @@ const CreatePartyDialog = ({
             <DialogFooter className="flex justify-center! gap-3 mt-4">
               <Button
                 className="bg-zinc-700 hover:bg-zinc-700/80 rounded-sm sm:w-[50%]"
-                onClick={() => setStep("RESERVE")}
+                // onClick={() => setStep("RESERVE")}
+                onClick={() =>
+                  alert("카르페디엠. 지금 바로 watch party를 즐기세요.")
+                }
               >
                 예약하기
               </Button>
