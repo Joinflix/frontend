@@ -9,24 +9,14 @@ interface SearchFilterProps {
   setSearchWord: (val: string) => void;
 }
 
-export type PrimaryFilter = "ALL" | "FRIEND" | "EMAIL" | "NICKNAME";
+export type PrimaryFilter = "ALL" | "FRIEND";
 
 const SECONDARY_OPTIONS = {
   FRIEND: [
     { label: "전체", value: "ALL" },
     { label: "친구", value: "FRIEND" },
-    { label: "대기중", value: "PENDING" },
-    { label: "신청 받음", value: "REQUESTED" },
-  ],
-  EMAIL: [
-    { label: "정렬 방식", value: "ALL" },
-    { label: "오름차순 ↑", value: "EMAIL_ASC" },
-    { label: "내림차순 ↓", value: "EMAIL_DESC" },
-  ],
-  NICKNAME: [
-    { label: "정렬 방식", value: "ALL" },
-    { label: "오름차순 ↑", value: "NICKNAME_ASC" },
-    { label: "내림차순 ↓", value: "NICKNAME_DESC" },
+    { label: "보낸 요청", value: "PENDING" },
+    { label: "받은 요청", value: "REQUESTED" },
   ],
 };
 
@@ -66,13 +56,7 @@ const SearchFilter = ({
         {/* 1. The Visual Layer: This is what the user SEES */}
         <div className="flex items-center w-full h-full pointer-events-none">
           <span className="pl-4 pr-1 text-xs font-medium text-zinc-300">
-            {primary === "ALL"
-              ? "전체"
-              : primary === "FRIEND"
-                ? "친구"
-                : primary === "EMAIL"
-                  ? "이메일"
-                  : "닉네임"}
+            {primary === "ALL" ? "전체" : "친구"}
           </span>
           <div className="pr-3 flex items-center ml-auto">
             <ChevronDown
@@ -94,8 +78,6 @@ const SearchFilter = ({
         >
           <option value="ALL">전체</option>
           <option value="FRIEND">친구</option>
-          <option value="EMAIL">이메일</option>
-          <option value="NICKNAME">닉네임</option>
         </select>
       </div>
 

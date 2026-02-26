@@ -1,7 +1,22 @@
 import { ContactRound } from "lucide-react";
 import FriendActionButton from "./FriendActionButton";
+import type { Friend } from "./FriendSearchDialog";
 
-const UserList = ({ user, onRequest, onRemove, onAccept, onRefuse }: any) => (
+interface UserListProps {
+  user: Friend;
+  onRequest: () => void;
+  onRemove: () => void;
+  onAccept: () => void;
+  onRefuse: () => void;
+}
+
+const UserList = ({
+  user,
+  onRequest,
+  onRemove,
+  onAccept,
+  onRefuse,
+}: UserListProps) => (
   <div className="flex justify-between items-center p-3 hover:bg-white/5 rounded-lg transition-all duration-300 group">
     <div className="flex gap-3 items-center">
       <div className="relative">
@@ -25,7 +40,7 @@ const UserList = ({ user, onRequest, onRemove, onAccept, onRefuse }: any) => (
     </div>
 
     <FriendActionButton
-      status={user.friendStatus}
+      status={user.status}
       onRequest={onRequest}
       onRemove={onRemove}
       onAccept={onAccept}

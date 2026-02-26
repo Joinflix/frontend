@@ -7,7 +7,10 @@ export const useFriendActions = (
   const queryClient = useQueryClient();
 
   const invalidateUsers = () => {
-    queryClient.invalidateQueries({ queryKey: ["users"], type: "active" });
+    queryClient.invalidateQueries({
+      queryKey: ["friendship"],
+      type: "active",
+    });
   };
 
   const requestFriendMutation = useMutation({

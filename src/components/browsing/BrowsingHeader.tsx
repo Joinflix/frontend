@@ -1,8 +1,6 @@
 import { ContactRound, Search } from "lucide-react";
 import { useLocation, useNavigate } from "react-router";
 import { useState } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import apiClient from "../../api/axios";
 import FriendSearchDialog from "../friend/FriendSearchDialog";
 import { AlertDropdown } from "./AlertDropdown";
 import { ProfileDropdown } from "./ProfileDropdown";
@@ -19,7 +17,6 @@ const BrowsingHeader = () => {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  const [searchWord, setSearchWord] = useState("");
   const [pendingRequestIds, setPendingRequestIds] = useState<Set<number>>(
     new Set(),
   );
@@ -32,35 +29,6 @@ const BrowsingHeader = () => {
   const handleClickFriendSearch = () => {
     setIsFriendSearchOpen(true);
   };
-
-  const {
-    data,
-    isPending: allUsersIsPending,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
-    queryKey: ["users", searchWord],
-    queryFn: async ({ pageParam = null }) => {
-      const res = await apiClient("/users/search", {
-        params: {
-          cursorId: pageParam,
-          size: 10,
-          keyword: searchWord,
-        },
-      });
-      return res.data;
-    },
-    getNextPageParam: (lastPage) => {
-      if (lastPage.last || lastPage.content.length === 0) return undefined;
-      const lastItem = lastPage.content[lastPage.content.length - 1];
-      return lastItem?.id;
-    },
-    initialPageParam: null,
-    enabled: isFriendSearchOpen,
-  });
-
-  const allUsersList = data?.pages.flatMap((page) => page.content) || [];
 
   const handleClickRequestFriend = (receiverId: number) => {
     requestFriend(receiverId);
@@ -121,18 +89,11 @@ const BrowsingHeader = () => {
         <FriendSearchDialog
           isOpen={isFriendSearchOpen}
           onOpenChange={setIsFriendSearchOpen}
-          searchWord={searchWord}
-          setSearchWord={setSearchWord}
-          users={allUsersList}
-          isLoading={allUsersIsPending}
           pendingIds={pendingRequestIds}
           onRequest={handleClickRequestFriend}
           onRemove={handleClickRemoveFriend}
           onAccept={handleClickAcceptFriend}
           onRefuse={handleClickRefuseFriend}
-          hasNextPage={hasNextPage}
-          fetchNextPage={fetchNextPage}
-          isFetchingNextPage={isFetchingNextPage}
         />
 
         <AlertDropdown

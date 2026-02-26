@@ -1,8 +1,9 @@
 import { Clock, UserRoundMinus, UserRoundPlus, UserRoundX } from "lucide-react";
 import { ActionButton } from "./ActionButton";
+import type { FriendStatus } from "../../types/friend";
 
 interface Props {
-  status: "FRIEND" | "SENT_PENDING" | "RECEIVED_PENDING" | "NONE";
+  status: FriendStatus;
   onRequest: () => void;
   onRemove: () => void;
   onAccept: () => void;
