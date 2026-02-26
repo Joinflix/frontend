@@ -113,7 +113,7 @@ const FriendSearchDialog = ({
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="mt-2 h-[50vh] overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-1"
+          className="mt-2 h-[50vh] overflow-y-auto pr-2 scrollbar-hidden flex flex-col gap-1"
         >
           {isLoadingFriends ? (
             <div className="text-center py-10 text-zinc-500 text-sm animate-pulse">

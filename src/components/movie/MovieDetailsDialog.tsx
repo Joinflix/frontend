@@ -46,7 +46,7 @@ const MovieDetailsDialog = ({
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogOverlay className="fixed inset-0 bg-black/80" />
-        <DialogContent className="w-full max-w-[90%] max-h-[90%] md:max-w-2xl md:h-[80%] p-0! border-none! overflow-auto bg-black">
+        <DialogContent className="w-full max-w-[90%] max-h-[90%] md:max-w-2xl md:h-[80%] p-0! border-none! overflow-auto bg-black scrollbar-hidden">
           {!isPendingMovie && (
             <div>
               <DialogTitle className="sr-only">{movie.title}</DialogTitle>

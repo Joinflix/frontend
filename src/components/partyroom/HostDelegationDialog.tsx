@@ -76,7 +76,7 @@ const HostDelegationDialog = ({
             <h3 className="text-xl font-bold text-white mb-4">
               새 호스트 선택
             </h3>
-            <div className="max-h-60 overflow-y-auto mb-6 flex flex-col gap-2 pr-1 custom-scrollbar">
+            <div className="max-h-60 overflow-y-auto mb-6 flex flex-col gap-2 pr-1 scrollbar-hidden">
               {!isFetchingMemberList && memberList?.length > 0 ? (
                 memberList.map((member: Member) => (
                   <button

@@ -277,7 +277,7 @@ const CreatePartyDialog = ({
               )}
             </div>
 
-            <div className="min-h-[200px] max-h-[300px] grid grid-cols-1 md:grid-cols-2 md:gap-x-20 items-center justify-center overflow-auto">
+            <div className="min-h-[200px] max-h-[300px] grid grid-cols-1 md:grid-cols-2 md:gap-x-20 items-center justify-center overflow-auto scrollbar-hidden">
               {friends.map((friend: Friend) => {
                 const isSelected = selectedFriends.includes(friend.userId);
 

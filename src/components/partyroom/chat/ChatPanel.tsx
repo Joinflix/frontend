@@ -166,7 +166,7 @@ const ChatPanel = ({
 
           {/* Foldable Content */}
           {isVoiceControlOpen && (
-            <div className="overflow-y-auto px-3 pb-3 space-y-2 custom-scrollbar">
+            <div className="overflow-y-auto px-3 pb-3 space-y-2 scrollbar-hidden">
               <div
                 className={`flex flex-col gap-1 p-2 px-2 border rounded-lg ${isMicActive ? "bg-[#816BFF]/10 border-1.5 border-[#816BFF]/30" : "bg-zinc-400/10 border-zinc-400/30"} `}
               >
@@ -258,7 +258,7 @@ const ChatPanel = ({
       </div>
 
       {/* 채팅 메시지 영역 */}
-      <div className="flex-1 flex flex-col gap-2.5 overflow-y-auto overflow-x-hidden px-2 py-4">
+      <div className="flex-1 flex flex-col gap-2.5 overflow-y-auto overflow-x-hidden scrollbar-hidden px-2 py-4">
         {chatMessages.map((msg, index) => {
           // 알림 메시지
           if (msg.messageType !== "TALK") {
