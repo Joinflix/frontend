@@ -25,11 +25,12 @@ export const useLeaveParty = ({
       });
     }
 
-    // 파티 목록 리프레시
-    queryClient.invalidateQueries({ queryKey: ["getPartyRooms"] });
-
     // 파티 페이지로 이동
     navigate("/party", { replace: true });
+
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ["getPartyRooms"] });
+    }, 300);
   };
 
   return { leaveParty };

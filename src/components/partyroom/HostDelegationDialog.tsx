@@ -1,6 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import apiClient from "../../api/axios";
 import { usePartyMembers } from "../../api/queries/usePartyMembers";
 
 //MemberResponse(BE)
@@ -72,7 +70,7 @@ const HostDelegationDialog = ({
             </h3>
             <div className="max-h-60 overflow-y-auto mb-6 flex flex-col gap-2 pr-1 scrollbar-hidden">
               {!isFetchingMemberList && memberList?.length > 0 ? (
-                memberList.map((member: Member) => (
+                memberList?.map((member: Member) => (
                   <button
                     key={member.memberId}
                     onClick={() => onLeave(member.memberId)}
