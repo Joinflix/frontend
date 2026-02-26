@@ -47,11 +47,11 @@ const LandingBody = () => {
               pauseDelay={10_000}
               cursorStyle="underscore"
             >
-              친구들과 실시간으로 소통하며 즐기는 watch party
+              친구들과 함께 즐기는 watch party
             </TypingAnimation>
           </div>
           <p className="text-sm">
-            100원으로 부담 없이 친구들과 함께 watch party를 즐길 준비가
+            월 100원으로 부담 없이 친구들과 함께 watch party를 즐길 준비가
             되셨나요?
           </p>
           <p className="text-sm">
