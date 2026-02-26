@@ -37,7 +37,7 @@ const LandingBody = () => {
 
   return (
     <>
-      <div className="mt-40 mb-40 flex flex-col items-center text-white py-10">
+      <div className="mt-20 mb-20 flex flex-col items-center text-white py-10">
         {/* CTA */}
         <div className="text-center space-y-2">
           <div className="mb-5">
