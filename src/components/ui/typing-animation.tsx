@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion, MotionProps, useInView } from "motion/react";
+import { motion, type MotionProps, useInView } from "motion/react";
 import { cn } from "../../lib/utils";
 
 interface TypingAnimationProps extends MotionProps {
@@ -46,9 +46,14 @@ export function TypingAnimation({
   const [phase, setPhase] = useState<"typing" | "pause" | "deleting">("typing");
   const elementRef = useRef<HTMLElement | null>(null);
   const isInView = useInView(elementRef as React.RefObject<Element>, {
-    amount: 0.3,
+    amount: 0.1,
     once: true,
   });
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+  const shouldStart = startOnView ? isInView || hasMounted : true;
 
   const wordsToAnimate = useMemo(
     () => words || (children ? [children] : []),
@@ -59,55 +64,46 @@ export function TypingAnimation({
   const typingSpeed = typeSpeed || duration;
   const deletingSpeed = deleteSpeed || typingSpeed / 2;
 
-  const shouldStart = startOnView ? isInView : true;
-
   useEffect(() => {
     if (!shouldStart || wordsToAnimate.length === 0) return;
 
-    const timeoutDelay =
-      delay > 0 && displayedText === ""
-        ? delay
-        : phase === "typing"
-          ? typingSpeed
-          : phase === "deleting"
-            ? deletingSpeed
-            : pauseDelay;
+    // 1. Determine the correct speed based on current action
+    let speed = typingSpeed;
+    if (phase === "deleting") speed = deletingSpeed;
+    if (phase === "pause") speed = pauseDelay;
+
+    // 2. Add the initial start delay only on the very first character
+    const finalDelay =
+      displayedText === "" && phase === "typing" ? speed + delay : speed;
 
     const timeout = setTimeout(() => {
       const currentWord = wordsToAnimate[currentWordIndex] || "";
       const graphemes = Array.from(currentWord);
 
-      switch (phase) {
-        case "typing":
-          if (currentCharIndex < graphemes.length) {
-            setDisplayedText(graphemes.slice(0, currentCharIndex + 1).join(""));
-            setCurrentCharIndex(currentCharIndex + 1);
-          } else {
-            if (hasMultipleWords || loop) {
-              const isLastWord = currentWordIndex === wordsToAnimate.length - 1;
-              if (!isLastWord || loop) {
-                setPhase("pause");
-              }
-            }
+      if (phase === "typing") {
+        if (currentCharIndex < graphemes.length) {
+          setDisplayedText(graphemes.slice(0, currentCharIndex + 1).join(""));
+          setCurrentCharIndex((prev) => prev + 1);
+        } else {
+          // Word finished
+          if (hasMultipleWords || loop) {
+            setPhase("pause");
           }
-          break;
-
-        case "pause":
-          setPhase("deleting");
-          break;
-
-        case "deleting":
-          if (currentCharIndex > 0) {
-            setDisplayedText(graphemes.slice(0, currentCharIndex - 1).join(""));
-            setCurrentCharIndex(currentCharIndex - 1);
-          } else {
-            const nextIndex = (currentWordIndex + 1) % wordsToAnimate.length;
-            setCurrentWordIndex(nextIndex);
-            setPhase("typing");
-          }
-          break;
+        }
+      } else if (phase === "deleting") {
+        if (currentCharIndex > 0) {
+          setDisplayedText(graphemes.slice(0, currentCharIndex - 1).join(""));
+          setCurrentCharIndex((prev) => prev - 1);
+        } else {
+          // Reset to next word
+          const nextIndex = (currentWordIndex + 1) % wordsToAnimate.length;
+          setCurrentWordIndex(nextIndex);
+          setPhase("typing");
+        }
+      } else if (phase === "pause") {
+        setPhase("deleting");
       }
-    }, timeoutDelay);
+    }, finalDelay);
 
     return () => clearTimeout(timeout);
   }, [
@@ -115,14 +111,8 @@ export function TypingAnimation({
     phase,
     currentCharIndex,
     currentWordIndex,
-    displayedText,
     wordsToAnimate,
-    hasMultipleWords,
     loop,
-    typingSpeed,
-    deletingSpeed,
-    pauseDelay,
-    delay,
   ]);
 
   const currentWordGraphemes = Array.from(

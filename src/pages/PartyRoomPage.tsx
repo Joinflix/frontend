@@ -16,6 +16,7 @@ import { useLeaveParty } from "../hooks/useLeaveParty";
 import ClosePartyDialog from "../components/partyroom/ClosePartyDialog";
 import { useWebRTC } from "../hooks/useWebRTC";
 import LoadingOverlay from "../components/signup/step/LoadingOverlay";
+import { useQueryClient } from "@tanstack/react-query";
 
 const chatWidth = 336;
 const chevronStyle = "stroke-zinc-600 stroke-5";
@@ -23,6 +24,8 @@ const chevronStyle = "stroke-zinc-600 stroke-5";
 const PartyRoomPage = () => {
   const { partyId } = useParams();
   const location = useLocation();
+
+  const queryClient = useQueryClient();
 
   const user = useAuthStore((state) => state.user);
   const accessToken = useAuthStore((state) => state.accessToken);
@@ -43,8 +46,6 @@ const PartyRoomPage = () => {
     numericPartyId,
     location.state?.partyRoomData,
   );
-  console.log({ partyRoomData });
-  console.log(location.state?.partyRoomData);
 
   const isHost =
     partyRoomData && user
@@ -68,11 +69,14 @@ const PartyRoomPage = () => {
     } else {
       handleLeaveParty();
     }
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ["getPartyRooms"] });
+    }, 300);
   };
 
   const handleToggleMic = () => {
     if (!localStream) {
-      alert("마이크를 초기화 중입니다. 잠시만 기다려주세요!");
+      alert("브라우저 마이크 접근을 허용 후 창을 새로고침 해주세요!");
       return;
     }
 

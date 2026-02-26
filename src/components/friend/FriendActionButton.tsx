@@ -24,7 +24,7 @@ const FriendActionButton = ({
     return (
       <button
         onClick={onRemove}
-        className={`${BASE_STYLE} bg-zinc-500/10 text-zinc-400 hover:bg-red-500/20 hover:text-red-400 border-white/5`}
+        className={`${BASE_STYLE} bg-rose-500/10 text-rose-400/80 hover:text-white hover:bg-rose-500 border-rose-500/30`}
       >
         <UserRoundMinus size={14} /> <span>삭제</span>
       </button>
@@ -35,7 +35,7 @@ const FriendActionButton = ({
     return (
       <button
         disabled
-        className={`${BASE_STYLE} bg-zinc-800/50 text-zinc-500 border-white/5`}
+        className={`${BASE_STYLE} bg-amber-400/30 text-amber-100/80 border-amber-100/30`}
       >
         <Clock size={14} /> <span>대기</span>
       </button>
@@ -58,7 +58,7 @@ const FriendActionButton = ({
           label="거절"
           icon={UserRoundX}
           iconSize={14}
-          variantClassName={`${BASE_STYLE}  bg-rose-500/20 border-rose-500/30 text-rose-500 hover:bg-rose-600 hover:text-white transition-colors`}
+          variantClassName={`${BASE_STYLE}  bg-rose-500/20 border-rose-500/30 text-pink-500 hover:bg-pink-600 hover:text-white transition-colors`}
           onClick={onRefuse}
         />
       </div>

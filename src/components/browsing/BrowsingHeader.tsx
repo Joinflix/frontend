@@ -79,7 +79,7 @@ const BrowsingHeader = () => {
         </div>
       </div>
       <div className="flex flex-row gap-2 items-center">
-        <Search className={ICON_STYLE} />
+        {/* <Search className={ICON_STYLE} /> */}
 
         <ContactRound
           className={ICON_STYLE}

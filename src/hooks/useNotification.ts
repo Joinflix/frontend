@@ -97,6 +97,10 @@ export const useNotification = () => {
               queryKey: ["friendship"],
               type: "active",
             });
+            queryClient.invalidateQueries({
+              queryKey: ["friends"],
+              type: "active",
+            });
           }
         } catch (err) {
           console.error("Failed to parse notification:", err);

@@ -1,6 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import apiClient from "../../api/axios";
+import { usePartyMembers } from "../../api/queries/usePartyMembers";
 
 //MemberResponse(BE)
 interface Member {
@@ -25,14 +24,7 @@ const HostDelegationDialog = ({
     data: memberList,
     isFetching: isFetchingMemberList,
     refetch: fetchMemberList,
-  } = useQuery({
-    queryKey: ["memberList"],
-    queryFn: async () => {
-      const res = await apiClient.get(`/parties/${partyId}/members`);
-      return res.data;
-    },
-    enabled: false,
-  });
+  } = usePartyMembers(partyId);
 
   const handleFetchMemberList = async () => {
     await fetchMemberList();
@@ -78,7 +70,7 @@ const HostDelegationDialog = ({
             </h3>
             <div className="max-h-60 overflow-y-auto mb-6 flex flex-col gap-2 pr-1 scrollbar-hidden">
               {!isFetchingMemberList && memberList?.length > 0 ? (
-                memberList.map((member: Member) => (
+                memberList?.map((member: Member) => (
                   <button
                     key={member.memberId}
                     onClick={() => onLeave(member.memberId)}

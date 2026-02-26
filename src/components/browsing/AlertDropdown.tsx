@@ -121,7 +121,7 @@ export const AlertDropdown = ({
               allNotifications.map((noti) => (
                 <DropdownMenuItem
                   key={noti.id}
-                  className="flex flex-col items-start gap-1 p-3 cursor-pointer hover:bg-white/10 transition-colors border-b border-white/5 last:border-0"
+                  className="flex flex-col items-start gap-1 p-3 cursor-pointer hover:bg-zinc-700! hover:text-white! transition-colors border-b border-white/5 last:border-0"
                   onClick={() => handleClickNotification(noti)}
                 >
                   <div className="flex gap-4">

@@ -7,11 +7,12 @@ import {
   User as UserIcon,
   Volume2,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { PartyRoomData } from "../../../types/party";
 import type { ChatStompMessage } from "../../../types/chat";
 import RemoteAudio from "./RemoteAudio";
 import type { User } from "../../../store/useAuthStore";
+import { usePartyMembers } from "../../../api/queries/usePartyMembers";
 
 interface ChatWindowProps {
   // GENERAL
@@ -31,7 +32,6 @@ interface ChatWindowProps {
 const USER_COLORS = [
   "text-blue-400",
   "text-green-400",
-  "text-amber-400",
   "text-orange-400",
   "text-rose-400",
   "text-purple-400",
@@ -60,6 +60,30 @@ const ChatPanel = ({
   const [volumes, setVolumes] = useState<{ [userId: number]: number }>({});
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
+  const {
+    data: memberList,
+    isFetching: isFetchingMemberList,
+    refetch: fetchMemberList,
+  } = usePartyMembers(partyRoomData.id);
+
+  const memberMap = useMemo(() => {
+    const map: Record<number, { nickname: string; color: string }> = {};
+
+    if (!memberList || !Array.isArray(memberList)) return map;
+
+    memberList.forEach((member: any, index: number) => {
+      const id = member.memberId;
+      const nickname = member.memberNickname;
+
+      map[id] = {
+        nickname: nickname,
+        color: USER_COLORS[index % USER_COLORS.length],
+      };
+    });
+
+    return map;
+  }, [memberList]);
+
   // Initialize volume for new streams if not already set
   useEffect(() => {
     Object.keys(remoteStreams).forEach((id) => {
@@ -79,21 +103,6 @@ const ChatPanel = ({
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
-
-  // 닉네임을 기반으로 고유한 색상 클래스를 반환하는 함수
-  const getUsernameColor = (nickname: string) => {
-    if (!nickname) return USER_COLORS[0];
-
-    // 1. 문자열을 숫자로 변환 (Hash)
-    let hash = 0;
-    for (let i = 0; i < nickname.length; i++) {
-      hash = nickname.charCodeAt(i) + ((hash << 5) - hash);
-    }
-
-    // 2. 숫자를 색상 배열의 길이로 나눈 나머지값으로 인덱스 결정
-    const index = Math.abs(hash) % USER_COLORS.length;
-    return USER_COLORS[index];
-  };
 
   return (
     <>
@@ -177,7 +186,6 @@ const ChatPanel = ({
                     >
                       {user?.nickname} (나)
                     </span>
-                    {/* <VoiceVisualizer stream={localStream} /> */}
                   </div>
 
                   <div className="flex items-center gap-1">
@@ -201,6 +209,13 @@ const ChatPanel = ({
                 const isMuted = muteStatuses[userId];
                 const volume = volumes[userId] ?? 0.5; //default 50%
 
+                console.log({ memberList });
+
+                const memberInfo = memberMap[userId];
+                console.log({ memberInfo });
+                const displayName = memberInfo?.nickname || `User ${userId}`;
+                const nicknameColor = memberInfo?.color || "text-[#816BFF]";
+
                 return (
                   <div
                     key={userId}
@@ -210,8 +225,7 @@ const ChatPanel = ({
                       <span
                         className={`text-xs font-semibold truncate pr-2 ${isMuted ? "text-zinc-400/70" : "text-[#816BFF]"}`}
                       >
-                        User {userId}{" "}
-                        {/* You can map this to a nickname if you pass a member list */}
+                        {displayName}
                       </span>
                       <div className="flex items-center gap-1">
                         <span
@@ -273,12 +287,13 @@ const ChatPanel = ({
           }
 
           // 채팅 메시지
-          const colorClass = getUsernameColor(msg.senderNickname);
-
+          const senderId = Number(msg.senderId);
+          const senderData = memberMap[senderId];
+          const nameColor = senderData?.color || "text-amber-400";
           return (
             <div
               key={index}
-              className={`w-full max-w-full px-4 rounded-sm self-start ${colorClass} text-base font-light`}
+              className={`w-full max-w-full px-4 rounded-sm self-start ${nameColor} text-base font-light`}
             >
               <div className="inline-block text-lg font-extrabold">
                 {msg.senderNickname}

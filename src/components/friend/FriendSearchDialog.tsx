@@ -10,7 +10,7 @@ import { useAuthStore } from "../../store/useAuthStore";
 import { useRef, useState } from "react";
 import SearchFilter, { type PrimaryFilter } from "./SearchFilter";
 import { useFriendSearch } from "../../api/queries/useFriendSearch";
-import { useDebounce } from "../../utils/useDebounce";
+import { useDebounce } from "../../hooks/useDebounce";
 import type { FriendStatus } from "../../types/friend";
 
 // UserSearchResponse (BE)
