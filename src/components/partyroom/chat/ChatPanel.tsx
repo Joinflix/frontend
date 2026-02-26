@@ -32,7 +32,6 @@ interface ChatWindowProps {
 const USER_COLORS = [
   "text-blue-400",
   "text-green-400",
-  "text-amber-400",
   "text-orange-400",
   "text-rose-400",
   "text-purple-400",
@@ -187,7 +186,6 @@ const ChatPanel = ({
                     >
                       {user?.nickname} (나)
                     </span>
-                    {/* <VoiceVisualizer stream={localStream} /> */}
                   </div>
 
                   <div className="flex items-center gap-1">
@@ -225,7 +223,7 @@ const ChatPanel = ({
                   >
                     <div className="flex items-center justify-between">
                       <span
-                        className={`text-xs font-semibold truncate pr-2 ${isMuted ? "text-zinc-400/70" : nicknameColor}`}
+                        className={`text-xs font-semibold truncate pr-2 ${isMuted ? "text-zinc-400/70" : "text-[#816BFF]"}`}
                       >
                         {displayName}
                       </span>
@@ -289,11 +287,13 @@ const ChatPanel = ({
           }
 
           // 채팅 메시지
-          const senderColor = memberMap[msg.senderId]?.color || "text-white";
+          const senderId = Number(msg.senderId);
+          const senderData = memberMap[senderId];
+          const nameColor = senderData?.color || "text-amber-400";
           return (
             <div
               key={index}
-              className={`w-full max-w-full px-4 rounded-sm self-start ${senderColor} text-base font-light`}
+              className={`w-full max-w-full px-4 rounded-sm self-start ${nameColor} text-base font-light`}
             >
               <div className="inline-block text-lg font-extrabold">
                 {msg.senderNickname}
