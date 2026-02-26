@@ -164,7 +164,10 @@ export const AlertDropdown = ({
         selectedPartyId={selectedPartyId}
         onClose={() => setSelectedPartyId(null)}
         onJoin={(partyId, passCode) => {
-          joinParty({ partyId, passCode });
+          joinParty(
+            { partyId, passCode },
+            { onError: () => setSelectedPartyId(null) },
+          );
         }}
       />
     </>
