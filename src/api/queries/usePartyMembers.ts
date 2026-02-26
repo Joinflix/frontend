@@ -18,6 +18,8 @@ export const usePartyMembers = (partyId: number | string | undefined) => {
       const res = await apiClient.get(`/parties/${partyId}/members`);
       return res.data;
     },
-    enabled: false,
+    enabled: !!partyId,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 };
