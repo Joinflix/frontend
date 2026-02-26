@@ -35,7 +35,7 @@ const MovieDetailsDialog = ({
   });
 
   const handleClickPlay = (movieTitle: string) => {
-    alert(`play ${movieTitle}`);
+    alert(`${movieTitle}를 혼자 보는 것보다 같이 보는 게 재미있을 거예요`);
   };
 
   const handleClickParty = () => {
