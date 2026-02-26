@@ -19,11 +19,11 @@ const planData = [
     description:
       "광고와 함께 즐기는 합리적인 가격의 플랜입니다. 일부 콘텐츠 제외.",
     features: [
-      { title: "요금", description: "100원" },
+      { title: "요금", description: "월 100원" },
       { title: "해상도", description: "1080p" },
       { title: "동시 시청", description: "2명" },
-      { title: "동시 시청", description: "2명" },
-      { title: "동시 시청", description: "2명" },
+      { title: "Joinflex 열정도", description: "🔥" },
+      { title: "Joinflex 애정도", description: "❤️" },
     ],
   },
   {
@@ -34,11 +34,11 @@ const planData = [
     description:
       "무광고로 즐기는 표준 플랜입니다. 두 대의 기기에서 동시 시청 가능.",
     features: [
-      { title: "요금", description: "200원" },
+      { title: "요금", description: "월 200원" },
       { title: "해상도", description: "1080p" },
-      { title: "동시 시청", description: "3명" },
-      { title: "동시 시청", description: "3명" },
-      { title: "동시 시청", description: "3명" },
+      { title: "동시 시청", description: "2명" },
+      { title: "Joinflex 열정도", description: "🔥🔥🔥" },
+      { title: "Joinflex 애정도", description: "❤️❤️❤️" },
     ],
   },
   {
@@ -49,11 +49,11 @@ const planData = [
     description:
       "최고의 화질과 공간 음향을 제공합니다. 최대 4대 기기 동시 시청.",
     features: [
-      { title: "요금", description: "300원" },
+      { title: "요금", description: "월 300원" },
       { title: "해상도", description: "4K + HDR" },
       { title: "동시 시청", description: "4명" },
-      { title: "동시 시청", description: "4명" },
-      { title: "동시 시청", description: "4명" },
+      { title: "Joinflex 열정도", description: "🔥🔥🔥🔥🔥" },
+      { title: "Joinflex 애정도", description: "❤️❤️❤️❤️❤️" },
     ],
   },
 ];
