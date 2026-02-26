@@ -1,4 +1,3 @@
-import { Search, CircleX } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -8,48 +7,55 @@ import {
 } from "../ui/dialog";
 import UserList from "./UserList";
 import { useAuthStore } from "../../store/useAuthStore";
-import { useMemo, useRef } from "react";
+import { useRef, useState } from "react";
+import SearchFilter, { type PrimaryFilter } from "./SearchFilter";
+import { useFriendSearch } from "../../api/queries/useFriendSearch";
+import { useDebounce } from "../../utils/useDebounce";
+import type { FriendStatus } from "../../types/friend";
+
+// UserSearchResponse (BE)
+export interface Friend {
+  userId: number;
+  email: string;
+  nickname: string;
+  profileImageUrl: string;
+  status: FriendStatus;
+  requestId: number;
+  priority: number;
+}
 
 interface FriendSearchDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  searchWord: string;
-  setSearchWord: (word: string) => void;
-  users: any[];
-  isLoading: boolean;
   pendingIds: Set<number>;
   onRequest: (id: number) => void;
   onRemove: (id: number) => void;
   onAccept: (id: number) => void;
   onRefuse: (id: number) => void;
-  hasNextPage?: boolean;
-  fetchNextPage?: () => void;
-  isFetchingNextPage?: boolean;
 }
 
-const STATUS_PRIORITY: Record<string, number> = {
-  RECEIVED_PENDING: 1,
-  SENT_PENDING: 2,
-  FRIEND: 3,
-  NONE: 4,
+const EMPTY_MESSAGES: Record<string, string> = {
+  FRIEND: "맺어진 친구가 없습니다.",
+  PENDING: "보낸 친구 요청이 없습니다.",
+  REQUESTED: "받은 친구 요청이 없습니다.",
+  ALL: "사용자가 없습니다.",
 };
 
 const FriendSearchDialog = ({
   isOpen,
   onOpenChange,
-  searchWord,
-  setSearchWord,
-  users,
-  isLoading,
   onRequest,
   onRemove,
   onAccept,
   onRefuse,
-  hasNextPage,
-  fetchNextPage,
-  isFetchingNextPage,
 }: FriendSearchDialogProps) => {
   const userId = useAuthStore((state) => state.user?.userId);
+
+  const [primary, setPrimary] = useState<PrimaryFilter>("ALL");
+  const [secondary, setSecondary] = useState("ALL");
+  const [searchWord, setSearchWord] = useState("");
+
+  const debouncedSearchWord = useDebounce(searchWord, 400);
 
   const triggerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -64,31 +70,23 @@ const FriendSearchDialog = ({
     }
   };
 
-  const sortedUsers = useMemo(() => {
-    if (!users) return [];
+  const handlePrimaryChange = (newPrimary: PrimaryFilter) => {
+    setPrimary(newPrimary);
+    setSecondary("ALL");
+    setSearchWord("");
+  };
 
-    return [...users]
-      .filter((user) => user.id !== userId)
-      .sort((a, b) => {
-        // 1. Sort by Status Priority
-        // Fallback to 5 if a status somehow doesn't match the type
-        const priorityA =
-          STATUS_PRIORITY[a.friendStatus as keyof typeof STATUS_PRIORITY] ?? 5;
-        const priorityB =
-          STATUS_PRIORITY[b.friendStatus as keyof typeof STATUS_PRIORITY] ?? 5;
+  const {
+    data,
+    isLoading: isLoadingFriends,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useFriendSearch(primary, secondary, debouncedSearchWord);
 
-        if (priorityA !== priorityB) {
-          return priorityA - priorityB;
-        }
+  const users = data?.pages.flatMap((page) => page.content) || [];
 
-        // 2. Secondary Sort: Alphabetical Nickname (Ascending)
-        // Note: Using 'nickname' (Capital N) to match your JSON structure
-        const nameA = a.nickname ?? "";
-        const nameB = b.nickname ?? "";
-
-        return nameA.localeCompare(nameB, "ko");
-      });
-  }, [users, userId]);
+  const emptyMessage = EMPTY_MESSAGES[secondary] ?? "사용자가 없습니다.";
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -98,28 +96,15 @@ const FriendSearchDialog = ({
             친구 찾기
           </DialogTitle>
           <DialogDescription asChild>
-            <div className="flex flex-col gap-4 mt-4">
-              {/* Organic Search Bar */}
-              <div className="relative flex items-center group">
-                <div className="absolute left-4 text-zinc-500 transition-colors group-focus-within:text-[#816BFF]">
-                  <Search size={18} />
-                </div>
-                <input
-                  className="w-full bg-white/5 border border-white/5 rounded-lg py-3 pl-11 pr-11 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#816BFF]/50 transition-all"
-                  type="text"
-                  placeholder="닉네임 혹은 이메일로 검색"
-                  value={searchWord}
-                  onChange={(e) => setSearchWord(e.target.value)}
-                />
-                {searchWord && (
-                  <button
-                    className="absolute right-4 text-zinc-500 hover:text-white transition-colors cursor-pointer"
-                    onClick={() => setSearchWord("")}
-                  >
-                    <CircleX size={18} />
-                  </button>
-                )}
-              </div>
+            <div className="flex flex-row items-center gap-3 mt-4 w-full">
+              <SearchFilter
+                primary={primary}
+                setPrimary={handlePrimaryChange}
+                secondary={secondary}
+                setSecondary={setSecondary}
+                searchWord={searchWord}
+                setSearchWord={setSearchWord}
+              />
             </div>
           </DialogDescription>
         </DialogHeader>
@@ -128,21 +113,21 @@ const FriendSearchDialog = ({
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="mt-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-1"
+          className="mt-2 h-[50vh] overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-1"
         >
-          {isLoading ? (
+          {isLoadingFriends ? (
             <div className="text-center py-10 text-zinc-500 text-sm animate-pulse">
               사용자를 불러오는 중...
             </div>
           ) : users?.length > 0 ? (
             <>
-              {sortedUsers
-                .filter((user) => user.id !== userId)
+              {(Array.isArray(users) ? users : [])
+                .filter((user) => user.userId !== userId)
                 .map((user) => (
                   <UserList
-                    key={user.id}
+                    key={user.userId}
                     user={user}
-                    onRequest={() => onRequest(user.id)}
+                    onRequest={() => onRequest(user.userId)}
                     onRemove={() => onRemove(user.requestId)}
                     onAccept={() => onAccept(user.requestId)}
                     onRefuse={() => onRefuse(user.requestId)}
@@ -158,7 +143,7 @@ const FriendSearchDialog = ({
                 ) : hasNextPage ? (
                   <div className="h-2" /> // Spacer that triggers the fetch
                 ) : (
-                  <div className="text-xs text-zinc-600 italic">
+                  <div className="text-xs text-zinc-600">
                     마지막 사용자입니다.
                   </div>
                 )}
@@ -167,7 +152,7 @@ const FriendSearchDialog = ({
           ) : (
             <>
               <div className="text-center py-10 text-zinc-500 text-sm">
-                사용자가 없습니다.
+                {emptyMessage}
               </div>
             </>
           )}

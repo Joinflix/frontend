@@ -94,7 +94,7 @@ export const useNotification = () => {
 
           if (shouldInvalidateUsers) {
             queryClient.invalidateQueries({
-              queryKey: ["users"],
+              queryKey: ["friendship"],
               type: "active",
             });
           }
