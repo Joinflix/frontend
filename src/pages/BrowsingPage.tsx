@@ -25,7 +25,7 @@ const BrowsingPage = () => {
         }
       />
       <RowCarousel title="Cinema Classics" items={cinemaClassics} />
-      <RowCarousel title="Must Watch" items={cinemaClassics} />
+      <RowCarousel title="Must Watch" items={[...cinemaClassics].reverse()} />
 
       {/* <Rank /> */}
 
