@@ -46,6 +46,7 @@ const PartyPage = () => {
     },
     onError: (err: any) => {
       alert(err.response?.data?.message || FALLBACK_ERROR_MESSAGE);
+      setSelectedPrivateRoomId(null);
       if (err.response?.data?.code === "MEMBERSHIP_REQUIRED")
         navigate("/signup/step4-list-membership");
     },
