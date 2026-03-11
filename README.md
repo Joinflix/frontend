@@ -1,73 +1,46 @@
-# React + TypeScript + Vite
+# JOINFLIX
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+ <details>
+<summary><h3> 🇺🇸 English (Click to expand)</h3></summary>
 
-Currently, two official plugins are available:
+### Project Overview
+A real-time **watch-party platform** where users can watch videos together while interacting live. The system adopts a progressive **real-time synchronization** architecture, evolving from **HTTP to SSE, WebSocket, and WebRTC** to achieve stable, low-latency group viewing.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+ ### 📡 Communication Strategy
+ The platform utilizes a layered real-time communication strategy:
 
-## React Compiler
+ | Protocol | Use Case | Implementation Details |
+ | :--- | :--- | :--- |
+ | **HTTP** | **CRUD** | User Authentication, Party Room creation |
+ | **SSE** | **Notifications** | Server-driven notification feeds & Friend requests |
+ | **WebSocket** | **Video Sync** | Video synchronization & Chat |
+ | **WebRTC** | **P2P Audio** | Peer-to-peer audio communication |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+ #### 💡 Engineering Focus: Why this architecture?
+ * **HTTP > SSE:** Optimized network overhead by replacing polling with server-sent events.
+ * **WebSocket vs. WebRTC:** Used P2P for audio to minimize server load and maximize speed.
+ * **High Stability:** Decoupled protocols to ensure system-wide reliability.
+ </details>
 
-## Expanding the ESLint configuration
+ <details open>
+ <summary><h3>🇰🇷 한국어 (클릭하여 펼치기)</h3></summary>
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 프로젝트 개요
+ 여러 사용자가 함께 영상을 시청하고 실시간으로 소통할 수 있는 **워치 파티 플랫폼**입니다. 안정적인 **실시간 동기화**를 위해 **HTTP, SSE, WebSocket, WebRTC** 다양한 통신 방식을 단계적으로 적용한 아키텍처를 구현했습니다.
+ 
+ ### 📡 통신 전략
+ 본 플랫폼은 높은 안정성과 저지연성을 확보하기 위해 계층별 실시간 통신 전략을 사용합니다.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+ | Protocol | Use Case | Implementation Details |
+ | :--- | :--- | :--- |
+ | **HTTP** | **CRUD** | 사용자 인증, 파티룸 생성 |
+ | **SSE** | **Notifications** | 서버 주도의 알림 피드 및 친구 요청 수신 |
+ | **WebSocket** | **Video Sync, Chat** | 영상 재생 동기화 및 실시간 채팅 |
+ | **WebRTC** | **P2P Audio** | 사용자 간 음성 통신 |
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+ #### 💡 Engineering Focus: 왜 이러한 구조를 선택했는가?
+ * **HTTP > SSE:** 모든 상태 확인을 폴링으로 처리하지 않고 서버 이벤트를 즉각 전달하여 오버헤드 최적화.
+ * **WebSocket > WebRTC:** 음성 데이터는 P2P 방식을 채택하여 서버 부하 감소 및 전송 속도 극대화.
+ * **High Stability:** 프로토콜 간 결합도를 낮춘(Decoupled) 아키텍처를 지향하여 안정성 확보.
+ </details>
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
