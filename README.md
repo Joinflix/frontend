@@ -22,8 +22,6 @@ The platform utilizes a layered real-time communication strategy:
 * **High Stability:** Decoupled protocols to ensure system-wide reliability.
 </details>
 
-<br />
-
 <details open>
 <summary><h3>🇰🇷 한국어 (클릭하여 펼치기)</h3></summary>
 
