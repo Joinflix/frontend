@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -48,5 +50,5 @@ jobs:
             docker compose down
             docker rmi ${{ secrets.DOCKER_USERNAME }}/joinflix-front:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/joinflix-front:latest
-            docker compose up -d
+            docker compose up -d --force-recreate
             docker image prune -f
